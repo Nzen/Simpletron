@@ -16,10 +16,8 @@ def testRam( usb ) :
 
 def testCpu( mem ) :
 	cmd = cpu.Cpu( 0, mem )
-	#cmd.acc = 10000
-	#cmd.checkOverflow( )
-	cmd.fetch( )
-	print " opCode %d  opVal %d" % ( cmd.opCode, cmd.opVal )
+	cmd.run( )
+	
 """
 Three classes:
 	Comp(uter) that is main and loads the program(s),
@@ -40,7 +38,7 @@ try:
 	for nn in files :
 		hdSector = open( nn )
 		for line in hdSector:
-			print "%d %s" % ( temp, line ), # cut after debugging
+			#print "%d %s" % ( temp, line ), # cut after debugging
 			if not line.startswith( "##" ) :
 				if ssd.exceedAddrBound( memNext ) :
 					continue

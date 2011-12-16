@@ -28,85 +28,102 @@ class Cpu( object ):
 		self.acc = 0 # accumulator
 		self.ir = 0 # instruction register
 		self.opCode = 0 # instruction in the IR
-		self.opVal = 0 # operand from the IR
+		self.opAddr = 0 # address pointed to in IR
+		self.opVal = 0 # value retrieved from opAddr
 		self.mem = ramPtr
 		
 	def checkOverflow( self ):
 		' if exceeds wordsize, pos or neg '
-		if self.acc > Cpu.word or -Cpu.word > self.acc:
+		if Cpu.word < self.acc :
+			Cpu.coreDump( self, "Accumulator overflow" )
+		elif -Cpu.word > self.acc:
+			Cpu.coreDump( self, "Accumulator underflow" )
 		# hur hur python, sure I can " -Cpu.word > self.acc > Cpu.word "
 		# but short circuiting means it doesn't check both
-			Cpu.coreDump( self, "Accumulator overflow" )
 	
 	def fetch( self ): # vetted 11 12 7
 		' get next, get indirected value '
 		if self.mem.exceedAddrBound( self.pc ) :
-			coreDump( "Address out of range" )
+			Cpu.coreDump( self, "Address out of range" )
 		else :
 			self.ir = self.mem.getFrom( self.pc )
 			self.opCode = self.ir / Cpu.halfWord
-			if self.mem.exceedAddrBound( self.ir % Cpu.halfWord ) :
+			self.opAddr = self.ir % Cpu.halfWord
+			if self.mem.exceedAddrBound( self.opAddr ) :
 				coreDump( "Address out of range" )
 			else:
-				self.opVal = self.mem.getFrom( self.ir % Cpu.halfWord ) # separate low order; also, this is explicitly indirect addressing
+				self.opVal = self.mem.getFrom( self.opAddr ) # separate low order; also, this is explicitly indirect addressing
 				self.pc += 1
 				# um, I hadn't been thinking to hard but I am putting the indirected value on top of opVal
 				# I guess I should put it in a different register
-				
-				# FIX THE ABOVE PROBLEM, I'm off to dinner
+				# dude, it's not a problem just think of it as another register
 	
 	def execute( self ):
 		' elif field of the ISA '
-		if Cpu.STOP == opCode:
-			self.running = false
-		elif Cpu.READ == opCode:
+		if Cpu.STOP == self.opCode:
+			self.running = False
+		elif Cpu.READ == self.opCode:
 			self.acc = raw_input( " -- " )
-		elif Cpu.WRITE == opCode: # to the terminal, am I assuming only ints here? perhaps separate int & char
+		elif Cpu.WRITE == self.opCode: # to the terminal, am I assuming only ints here? perhaps separate int & char
 			print self.acc
-		elif Cpu.ADD == opCode:
-			self.acc += opVal
-			checkOverflow( )
-		elif Cpu.SUBTR == opCode:
-			self.acc -= opVal
-			checkOverflow( )
-		elif Cpu.MULTP == opCode:
-			self.acc *= opVal
-			checkOverflow( )
-		elif Cpu.DIVIDE == opCode:
+		elif Cpu.ADD == self.opCode:
+			self.acc += self.opVal
+			Cpu.checkOverflow( self )
+		elif Cpu.SUBTR == self.opCode:
+			self.acc -= self.opVal
+			Cpu.checkOverflow( self )
+		elif Cpu.MULTP == self.opCode:
+			self.acc *= self.opVal
+			Cpu.checkOverflow( self )
+		elif Cpu.DIVIDE == self.opCode:
 			if self.opVal == 0:
-				coreDump( "Divide by zero? No." )
+				Cpu.coreDump( self, "Divide by zero? No." )
 			else:
-				self.acc /= opVal
-				checkOverflow( )
-		elif Cpu.GOTO == opCode:
-			if self.mem.exceedAddrBound( self.opVal ):
-				coreDump( "Address out of bounds" + str( self.opVal ) )
-			else:
-				self.pc = self.opVal
-		elif Cpu.GOTOZERO == opCode:
+				self.acc /= self.opVal
+				Cpu.checkOverflow( self )
+		# shit all these are getting the next instruction since fetch automatically puts it in there
+		# two options: a) they indirect to the value of the intended address
+		#					 b) these opCodes are direct: they test the address in the IR, not indirected
+		# for the moment, I'll work with B.
+		# in that case, the opAddr was already tested during the fetch, so there's no point in retesting
+		elif Cpu.GOTO == self.opCode:
+				self.pc = self.opAddr
+		elif Cpu.GOTOZERO == self.opCode:
 			if 0 == self.acc:
-				if self.mem.exceedAddrBound( opVal ):
-					coreDump( "Address out of bounds" + str( self.opVal ) )
-				else:
-					pc = opVal
-		elif Cpu.GOTONEG == opCode:
+				self.pc = self.opAddr
+		elif Cpu.GOTONEG == self.opCode:
 			if 0 > acc:
+				self.pc = self.opAddr
+			'''
 				if self.mem.exceedAddrBound( self.opVal ):
-					coreDump( "Address out of bounds" + str( self.opVal ) )
+					Cpu.coreDump( self, "Address out of bounds " + str( self.opVal ) )
 				else:
 					self.pc = self.opVal
+			elif Cpu.GOTOZERO == self.opCode:
+				if 0 == self.acc:
+					if self.mem.exceedAddrBound( self.opVal ):
+						Cpu.coreDump( self, "Address out of bounds " + str( self.opVal ) )
+					else:
+						self.pc = self.opVal
+			elif Cpu.GOTONEG == self.opCode:
+				if 0 > acc:
+					if self.mem.exceedAddrBound( self.opVal ):
+						Cpu.coreDump( self, "Address out of bounds " + str( self.opVal ) )
+					else:
+						self.pc = self.opVal
+			'''
 		elif Cpu.LOAD == self.opCode:
 			self.acc = self.mem.getFrom( self.opVal )
 		elif Cpu.STORE == self.opCode:
 			self.mem.setAt( self.opVal, self.acc )
 		else :
-			coreDump( "Unrecognized instruction" )	
+			Cpu.coreDump( self, "Unrecognized instruction" )	
 			
 	def run( self ):
 		' fetch & execute while running '
-		while running:
-			fetch( )
-			execute( )
+		while self.running:
+			Cpu.fetch( self )
+			Cpu.execute( self )
 			
 	def setPC( self, addr ):
 		' just in case an SML OS has to set it low level rather than putting it in its own code? '
@@ -122,6 +139,7 @@ class Cpu( object ):
 		dump.write( 'Accumulator: ' + str( self.acc ) + '\n\n\n'  )
 		self.mem.coreDump( dump )
 		dump.close( )
+		self.running = False
 		
 		
 		

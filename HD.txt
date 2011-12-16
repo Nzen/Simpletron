@@ -1,6 +1,21 @@
-102
-332
-42
+3103
+0012
+0013
+4001
+2002
+4108
+1108
+00
 ##
 
-Garbage for testing
+goto 3 if acc = 0 (it does)
+# 12
+# 13
+put 1 in acc
+add acc & 2
+store at 8
+print from 8
+stop
+# answer
+
+Shit, prints 13, not 26
