@@ -64,7 +64,7 @@ class Cpu( object ):
 			self.running = False
 			print "Halt"
 		elif Cpu.READ == self.opCode:
-			self.acc = raw_input( " -- " )
+			self.acc = int( raw_input( " -- " ) )
 			# doesn't need debug
 		elif Cpu.WRITE == self.opCode: # to the terminal, am I assuming only ints here? perhaps separate int & char
 			print self.acc	# or should I print the indirected value on the assumption that I already stored the Acc?
