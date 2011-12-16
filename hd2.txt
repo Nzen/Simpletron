@@ -1,6 +1,43 @@
-4555
-4533
-2344
+3010
+00
+01
+1000
+4108
+4008
+2109
+1100
+3217
+3013
+00
 ##
+(testing multiple files)
+	Shit, multiple files requires OS help because all these
+	hardcoded addresses foul up execution expectations
+	that is not encapsulated at all. Oh well.
+	I'm adding 7 to everything
 
-testing multiple files
+	User specified, decrementing while loop prints its index
+go past vars to 10
+(loop limit spot)
+(decrement spot)
+get user loop limit
+store at 1
+load 2
+subtract decrement
+print Acc
+goto 10 if zero
+goto 6 (subtract) since the other one failed
+stop
+
+	STOP = 0
+	READ = 10
+	WRITE = 11
+	ADD = 20
+	SUBTR = 21
+	MULTP = 22
+	DIVIDE = 23
+	GOTO = 30
+	GOTOZERO = 31
+	GOTONEG = 32
+	LOAD = 40
+	STORE = 41

@@ -62,20 +62,26 @@ class Cpu( object ):
 		' elif field of the ISA '
 		if Cpu.STOP == self.opCode:
 			self.running = False
+			print "Halt"
 		elif Cpu.READ == self.opCode:
 			self.acc = raw_input( " -- " )
+			# doesn't need debug
 		elif Cpu.WRITE == self.opCode: # to the terminal, am I assuming only ints here? perhaps separate int & char
-			print self.acc
+			print self.acc	# or should I print the indirected value on the assumption that I already stored the Acc?
 		elif Cpu.ADD == self.opCode:
+			print " adding %s and %d" % ( self.acc, self.opVal )
 			self.acc += self.opVal
 			Cpu.checkOverflow( self )
 		elif Cpu.SUBTR == self.opCode:
+			print " minusing %s and %d" % ( self.acc, self.opVal )
 			self.acc -= self.opVal
 			Cpu.checkOverflow( self )
 		elif Cpu.MULTP == self.opCode:
+			print " timesing %s and %d" % ( self.acc, self.opVal )
 			self.acc *= self.opVal
 			Cpu.checkOverflow( self )
 		elif Cpu.DIVIDE == self.opCode:
+			print " ratioing %s and %d" % ( self.acc, self.opVal )
 			if self.opVal == 0:
 				Cpu.coreDump( self, "Divide by zero? No." )
 			else:
@@ -87,12 +93,15 @@ class Cpu( object ):
 		# for the moment, I'll work with B.
 		# in that case, the opAddr was already tested during the fetch, so there's no point in retesting
 		elif Cpu.GOTO == self.opCode:
-				self.pc = self.opAddr
+			print " going to %d" % self.opAddr
+			self.pc = self.opAddr
 		elif Cpu.GOTOZERO == self.opCode:
+			print " going to %d if Acc is zero, it is %d" % ( self.opAddr, self.acc )
 			if 0 == self.acc:
 				self.pc = self.opAddr
 		elif Cpu.GOTONEG == self.opCode:
-			if 0 > acc:
+			print " going to %d if Acc is neg, it is %d" % ( self.opAddr, self.acc )
+			if 0 > self.acc:
 				self.pc = self.opAddr
 			'''
 				if self.mem.exceedAddrBound( self.opVal ):
@@ -113,9 +122,15 @@ class Cpu( object ):
 						self.pc = self.opVal
 			'''
 		elif Cpu.LOAD == self.opCode:
-			self.acc = self.mem.getFrom( self.opVal )
+			print " getting from %d" % ( self.opAddr )
+			self.acc = self.mem.getFrom( self.opAddr )
+			# damn it, I'm also going to make this one direct too, at least while the goto's are direct
 		elif Cpu.STORE == self.opCode:
-			self.mem.setAt( self.opVal, self.acc )
+			print " saving %s at %d" % ( self.acc, self.opAddr ) # um why does the compiler think the Acc has a String?
+			self.mem.setAt( self.opAddr, self.acc )
+			# shit, more direct addressing. I may have to bite the bullet and indirect everything
+			# I am loath because it is tedious while I am debugging everything
+			# obviously, a compiler can handle itself either way though the wasted memory is ugly too
 		else :
 			Cpu.coreDump( self, "Unrecognized instruction" )	
 			

@@ -5,17 +5,29 @@
 2002
 4108
 1108
-00
 ##
 
-goto 3 if acc = 0 (it does)
+goto 3 if acc = 0 (it is)
 # 12
 # 13
 put 1 in acc
 add acc & 2
 store at 8
-print from 8
-stop
-# answer
+print (from 8) actually prints the Accumulator
+#
 
-Shit, prints 13, not 26
+Works, but relies on direct addressing for the moment.
+Removed stop to test multiple (sequential) processes
+
+	STOP = 0
+	READ = 10
+	WRITE = 11
+	ADD = 20
+	SUBTR = 21
+	MULTP = 22
+	DIVIDE = 23
+	GOTO = 30
+	GOTOZERO = 31
+	GOTONEG = 32
+	LOAD = 40
+	STORE = 41

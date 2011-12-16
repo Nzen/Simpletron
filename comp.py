@@ -15,6 +15,11 @@ def testRam( usb ) :
 	core.close( )
 
 def testCpu( mem ) :
+	core = open( "core.txt", 'w' )
+	mem.coreDump( core )
+	# so I can see RAM's contents even if CPU never halts or even succeeds silently
+	core.close( )
+	
 	cmd = cpu.Cpu( 0, mem )
 	cmd.run( )
 	
