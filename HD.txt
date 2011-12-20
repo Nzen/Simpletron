@@ -1,32 +1,28 @@
-3106
+3104
 0012
 0013
-0000
-0001
-0003
-0011
+9999
 4001
 2002
-4105
+4103
 1103
-0007
 ##
 
-goto 3 if acc = 0 (it is)
+< currently does not work as intended >
+
+goto 4 if acc = 0 (it is)
 # 12
 # 13
 # space for result
-# addr of 12, 1
-# addr of result, 3
-# addr of real code, 7
-put val indirected from 4 in acc
+put val at 1 in acc
 add acc & val at 2
-store in spot indirected from 5
-print (from 8) actually prints the Accumulator
+store in 3
+print (from 3)
+stop
 #
 
 Works, but relies on direct addressing for the moment.
-Removed stop to test multiple (sequential) processes
+Remove stop to test multiple (sequential) processes
 
 	STOP = 0
 	READ = 10

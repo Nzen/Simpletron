@@ -22,7 +22,7 @@ class Cpu( object ):
 	LOAD = 40
 	STORE = 41
 		
-	def __init__( self, startPC, ramPtr ) :
+	def __init__( self, startPC, ramPtr, outputStatements ) :
 		self.running = True
 		self.pc = startPC # program counter
 		self.acc = 0 # accumulator
@@ -31,14 +31,16 @@ class Cpu( object ):
 		self.opAddr = 0 # address pointed to in IR
 		self.opVal = 0 # value retrieved from opAddr
 		self.mem = ramPtr
+		self.verbose = outputStatements
 		
 	def checkOverflow( self ):
 		' if exceeds wordsize, pos or neg '
 		if Cpu.word < self.acc :
 			Cpu.coreDump( self, "Accumulator overflow" )
+			self.running = False
 		elif -Cpu.word > self.acc:
 			Cpu.coreDump( self, "Accumulator underflow" )
-		self.running = False
+			self.running = False
 	
 	def fetch( self ): # vetted 11 12 7
 		' get next, get indirected value '
@@ -54,72 +56,69 @@ class Cpu( object ):
 				self.running = False
 			else:
 				self.opVal = self.mem.getFrom( self.opAddr )
+				# this is a convenience, it may not be used if cpu writes to that location, or a goto
 				self.pc += 1
-	
-	def validateIndirectAddr( self ) :
-		' Repeating these checks 3 times is ugly '
-		if self.mem.exceedAddrBound( self.opVal ):
-			Cpu.coreDump( self, "Address out of bounds " + str( self.opVal ) )
-			self.running = False
-		else:
-			return True
 	
 	def execute( self ):
 		' elif field of the ISA '
 		if Cpu.STOP == self.opCode:
 			self.running = False
-			print "Halt"
+			if self.verbose :
+				print "Halt"
 		elif Cpu.READ == self.opCode:
-			self.acc = int( raw_input( " -- " ) )
-			# doesn't need debug
+			if self.verbose :
+				print " waiting for terminal input"
+			self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
 		elif Cpu.WRITE == self.opCode: # to the terminal, am I assuming only ints here? perhaps separate int & char
-			print self.acc	# or should I print the indirected value on the assumption that I already stored the Acc?
+			if self.verbose :
+				print " printing to terminal:",
+			print self.opVal
 		elif Cpu.ADD == self.opCode:
-			print " adding %s and %d" % ( self.acc, self.opVal )
+			if self.verbose :
+				print " adding %s and %d" % ( self.acc, self.opVal )
 			self.acc += self.opVal
 			Cpu.checkOverflow( self )
 		elif Cpu.SUBTR == self.opCode:
-			print " minusing %s and %d" % ( self.acc, self.opVal )
+			if self.verbose :
+				print " minusing %s and %d" % ( self.acc, self.opVal )
 			self.acc -= self.opVal
 			Cpu.checkOverflow( self )
 		elif Cpu.MULTP == self.opCode:
-			print " timesing %s and %d" % ( self.acc, self.opVal )
+			if self.verbose :
+				print " timesing %s and %d" % ( self.acc, self.opVal )
 			self.acc *= self.opVal
 			Cpu.checkOverflow( self )
 		elif Cpu.DIVIDE == self.opCode:
-			print " ratioing %s and %d" % ( self.acc, self.opVal )
+			if self.verbose :
+				print " ratioing %s and %d" % ( self.acc, self.opVal )
 			if 0 == self.opVal:
 				Cpu.coreDump( self, "Divide by zero? No." )
 				self.running = False
 			else:
 				self.acc /= self.opVal
 				Cpu.checkOverflow( self )
-		# For ease in initial testing, these all did direct addressing. No longer.
-		# A goto will point to the int value of the line number it actually intends to put in the PC
-		# It may mean a bit more waste at ISA level, but that's what compilers are for.
-		# However, the cpu won't check for bad values if the condition isn't met.
 		elif Cpu.GOTO == self.opCode:
-			print " going to %d" % self.opVal
-			if Cpu.validateIndirectAddr( ) :
-				self.pc = self.mem.getFrom( self.opVal )
+			if self.verbose :
+				print " going to %d" % self.opAddr
+			self.pc = self.opAddr
 		elif Cpu.GOTOZERO == self.opCode:
-			print " ptr %d to %d if Acc is zero, it is %d" % ( self.opVal, self.mem.getFrom( self.opVal ), self.acc )
+			if self.verbose :
+				print " if Acc (%d) is zero, goto %d" % ( self.acc, self.opAddr )
 			if 0 == self.acc:
-				if Cpu.validateIndirectAddr( self ) :
-					self.pc = self.mem.getFrom( self.opVal )
+				self.pc = self.opAddr
 		elif Cpu.GOTONEG == self.opCode:
-			print " ptr %d to %d if Acc is neg, it is %d" % ( self.opVal, self.mem.getFrom( self.opVal ), self.acc )
+			if self.verbose :
+				print " if Acc (%d) is neg, goto %d" % ( self.acc, self.opAddr )
 			if 0 > self.acc:
-				if Cpu.validateIndirectAddr( self ) :
-					self.pc = self.mem.getFrom( self.opVal )
+				self.pc = self.opAddr
 		elif Cpu.LOAD == self.opCode:
-			print " getting from %d" % ( self.opVal )
-			if Cpu.validateIndirectAddr( self ) :
-				self.acc = self.mem.getFrom( self.opVal )
+			if self.verbose :
+				print " getting %d from %d" % ( self.opVal, self.opAddr )
+			self.acc = self.opVal
 		elif Cpu.STORE == self.opCode:
-			print " saving %s at %d" % ( self.acc, self.opVal )
-			if Cpu.validateIndirectAddr( self ) :
-				self.mem.setAt( self.opVal, self.acc )
+			if self.verbose :
+				print " saving %s at %d" % ( self.acc, self.opAddr )
+			self.mem.setAt( self.opAddr, self.acc )
 		else :
 			Cpu.coreDump( self, "Unrecognized instruction" )
 			self.running = False
@@ -132,10 +131,15 @@ class Cpu( object ):
 			
 	def setPC( self, addr ):
 		' just in case an SML OS has to set it low level rather than putting it in its own code? '
-		self.pc = addr - 1
+		if self.mem.exceedAddrBound( addr ) :
+				coreDump( "Address out of range" )
+				self.running = False
+		else:
+			self.pc = addr
 	
 	def coreDump( self, reason ):
 		' hardware error, so WRITE the registers & memory '
+		# I don't think this should silently fail, even if I don't want a verbose cpu
 		print "core dump time: " + reason
 		dump = open( "dump.txt", 'w' )
 		dump.write( '\nVM fault: ' + reason + '\n' )

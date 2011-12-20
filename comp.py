@@ -6,6 +6,13 @@ import cpu
 import ram
 from sys import argv # assuming you tell me which files you want loaded from HD
 
+"""
+Three classes:
+	Comp(uter) that is main and loads the program(s),
+	CPU that is a Von Neumann, accumulator Risc
+	Ram, a wrapper for a list
+"""
+
 def testRam( usb ) :
 	' unit test for ram module, setting tested in the loader below '
 	for uu in range( 5, 0, -1 ) :
@@ -19,20 +26,13 @@ def testCpu( mem ) :
 	mem.coreDump( core )
 	# so I can see RAM's contents even if CPU never halts or even succeeds silently
 	core.close( )
-	
 	cmd = cpu.Cpu( 0, mem )
 	cmd.run( )
-	
-"""
-Three classes:
-	Comp(uter) that is main and loads the program(s),
-	CPU that is a Von Neumann, accumulator Risc
-	Ram, a wrapper for a list
-"""
-files = argv # I am a list?
+
+files = argv 
 
 ssd = ram.Ram( )
-#cmd = cpu.Cpu( 0, ssd )
+cmd = cpu.Cpu( 0, ssd, True ) # true is for verbose mode
 
 # fill RAM with data & machine code
 memNext = 0
@@ -55,8 +55,8 @@ try:
 			temp += 1
 		hdSector.close( )
 	#testRam( ssd )
-	testCpu( ssd )
-	#cmd.run( )
-finally:
+	#testCpu( ssd )
+	cmd.run( )
+finally: # is there a catch instead?
 	#print "filo exception probably"
 	pass

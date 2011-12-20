@@ -1,13 +1,13 @@
-3010
+3011
 00
 01
-1000
-4108
-4008
-2109
-1100
-3117
-3013
+1009
+4009
+2110
+4109
+1109
+3118
+3012
 00
 ##
 (testing multiple files)
@@ -17,15 +17,15 @@
 	I'm adding 7 to everything
 
 	User specified, decrementing while loop prints its index
-go past vars to 10
+go past vars to 11
 (loop limit spot)
 (decrement spot)
-get user loop limit
-store at 1
-load 2
-subtract decrement
-print Acc
-goto 10 if zero
+get user loop limit, put in 9
+load from 9
+subtract decrement at 10
+store at 9
+print from 9
+goto 1 if zero
 goto 6 (subtract) since the other one failed
 stop
 
