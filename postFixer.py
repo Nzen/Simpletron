@@ -7,18 +7,21 @@
 
 import stack
 
-def operator( candidate ) :
+def isOperator( candidate ) :
 	pass
-	# dictionary, tuple, or list?
+	# dictionary
 	
-def pedmas( focus, fromTemp ) :
+def higherPrecedence( focus, fromTemp ) :
 	pass
-	# elif field?
+	# dictionary recalls operator vals, then I return the if
+	#x = opDic[ focus ]
+	#y = opDic[ fromTemp ]
+	#return y >= x
 
 def convertToPostFix( infix ) :
 	' equation is a string expression of the form above '
 	temp = stack.Stack( len( infix ) )
-	# tokenize equation
+	# tokenize equation into a list
 	ind = 0
 	next = 0
 	postFix = ""
@@ -33,8 +36,8 @@ def convertToPostFix( infix ) :
 			next += 1 # do I still need this? not really, if append works
 		elif "(" == char :
 			temp.push( char )
-		elif operator( char ) :
-			while pedmas( char, temp.peek( ) ) :
+		elif isOperator( char ) :
+			while higherPrecedence( char, temp.peek( ) ) :
 				postFix.append ( temp.pop( ) )
 				# next += 1
 			temp.push( char )
