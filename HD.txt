@@ -1,18 +1,27 @@
-3103
+3106
 0012
 0013
+0000
+0001
+0003
+0011
 4001
 2002
-4108
-1108
+4105
+1103
+0007
 ##
 
 goto 3 if acc = 0 (it is)
 # 12
 # 13
-put 1 in acc
-add acc & 2
-store at 8
+# space for result
+# addr of 12, 1
+# addr of result, 3
+# addr of real code, 7
+put val indirected from 4 in acc
+add acc & val at 2
+store in spot indirected from 5
 print (from 8) actually prints the Accumulator
 #
 
