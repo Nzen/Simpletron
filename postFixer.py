@@ -7,46 +7,97 @@
 
 import stack
 
-def isOperator( candidate ) :
-	pass
-	# dictionary
+def isOperator( opDict, candidate ) :
+	return candidate in opDict
 	
-def higherPrecedence( focus, fromTemp ) :
-	pass
-	# dictionary recalls operator vals, then I return the if
-	#x = opDic[ focus ]
-	#y = opDic[ fromTemp ]
-	#return y >= x
-
-def convertToPostFix( infix ) :
-	' equation is a string expression of the form above '
-	temp = stack.Stack( len( infix ) )
-	# tokenize equation into a list
+def higherPrecedence( opDic, focusOp, fromTempOp ) :
+	if fromTempOp.isdigit( ) :
+		return False
+	x = opDic[ focusOp ]
+	y = opDic[ fromTempOp ]
+	return y >= x
+	
+def convertSilently( infixString ) :
+	' frozen until convertVerbosely works as expected, ie this does NOT work '
+	operators = { "(": 0, ")": 1, "/": 2, "*": 3, "+": 4, "-": 5 } # so it wouldn't reInit every time
+	# while my inclination is to find a python enum equivalent, the dict handles quietly
+	temp = stack.Stack( )
+	infix = infixString.split( ' ' )
+	postFix = [ ]
 	ind = 0
 	next = 0
-	postFix = ""
 	temp.push( "(" )
 	infix.append( ")" )
 	char = ""
+	bound = len( infix )
 	
-	while ( temp.notEmpty( ) ) :
-		# get next token from infix
-		if isNumber( char ) : # isn't there a string function so I don't have to?
-			postFix.append( str( char ) )
-			next += 1 # do I still need this? not really, if append works
-		elif "(" == char :
+	while ( temp.notEmpty( ) and bound > ind ) :
+	# Deitel's spec says the temp stack is enough, but I'm overflowing infix
+	# for now, I'm going to nix that explicitly and recheck the algorithm later
+		char = infix[ ind ]
+		if char.isdigit( ) :
+			postFix.append( char )
+		elif "(" is char :
 			temp.push( char )
-		elif isOperator( char ) :
-			while higherPrecedence( char, temp.peek( ) ) :
+		elif isOperator( operators, char ) :
+			while higherPrecedence( operators, char, temp.peek( ) ) : # or maybe just do this once & continue?
 				postFix.append ( temp.pop( ) )
-				# next += 1
 			temp.push( char )
-		elif ")" == char :
-			while "(" not temp.peek( ) :
+		elif ")" is char :
+			while "(" != temp.peek( ) :
 				postFix.append( temp.pop( ) )
-				# next++
 		else :
-			pass
-			# what else could it be?, increment char
+			print "um, what is %s?" % char
+		ind += 1
 	
+	return postFix
+
+def convertVerbosely( infixString ) :
+	' I didn"t want to muddy the other one with 1000 if statements '
+	operators = { "(": 0, "/": 1, "*": 2, "+": 3, "-": 4 } # so it wouldn't reInit every time
+	temp = stack.Stack( )
+	infix = infixString.split( ' ' )
+	postFix = [ ]
+	ind = 0
+	next = 0
+	temp.push( "(" )
+	infix.append( ")" )
+	char = ""
+	bound = len( infix )
+	
+	while ( temp.notEmpty( ) and bound > ind ) :
+	# Deitel's spec says the temp stack is enough, but I'm overflowing infix
+	# for now, I'm going to nix that explicitly and recheck the algorithm later
+		char = infix[ ind ]
+		print "char is %s" % char
+		if char.isdigit( ) :
+			print "  is digit"
+			postFix.append( char )
+		elif "(" is char :
+			temp.push( char )
+		elif isOperator( operators, char ) :
+			print "  it's an operator"
+			while higherPrecedence( operators, char, temp.peek( ) ) : # or maybe just do this once & continue?
+				print "\tchar, %s is <= top of stack, %s" % ( char, temp.peek( ) )
+				postFix.append ( temp.pop( ) )
+			temp.push( char )
+		elif ")" is char :
+			print "time to search for the left parenthesis"
+			while "(" != temp.peek( ) :
+				print "\tfound %s, that's going onto postFix" % temp.peek( )
+				postFix.append( temp.pop( ) )
+		else :
+			print "um, what is %s?" % char
+		ind += 1
+		print "ind is %d\n" % ind
+		print "postfix : %s" % postFix
+		temp.printStack( )
+	return postFix
+
+def convertToPostFix( infixString, verbose ) :
+	postFix = []
+	if verbose :
+		postFix = convertVerbosely( infixString )
+	else :
+		postFix = convertSilently( infixString )
 	return postFix

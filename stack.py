@@ -1,20 +1,42 @@
 
 class Stack( object ) :
 	
-	def __init__( size ) :
-		self.stak = list( size ) # maybe? I saw this used but couldn't find the doc
+	def __init__( self ) :
+		' why am I reimplementing this? I am this close to trashing this '
+		self.stak = [ ]
 		self.top = -1
 	
-	def pop( ) :
-		self.top -= 1
-		return self.stak[ top + 1 ]
+	def pop( self ) :
+		if Stack.empty( self ) :
+			print "fail"
+			exit( 1 )
+		else :
+			self.top -= 1
+			return self.stak[ self.top + 1 ]
 		
-	def peek( ) :
-		return self.stak[ top ]
+	def peek( self ) :
+		" This is why, lists don't appear to offer peek "
+		if Stack.empty( self ) :
+			print "fail"
+			exit( 1 )
+		else :
+			return self.stak[ self.top ]
 		
-	def notEmpty( ) :
+	def notEmpty( self ) :
 		return 0 <= self.top
+		
+	def empty( self ) :
+		return 0 > self.top
 	
-	def push( val ) :
+	def push( self, val ) :
 		self.top += 1
-		self.stak[ top ] = val
+		self.stak.append( val )
+
+	def printStack( self ) :
+		# lord, python for loops.
+		if Stack.notEmpty( self ) :
+			for ind in range( 0, self.top ) :
+				print "%s " % self.stak[ ind ],
+			print
+		else :
+			print "Stack Empty"
