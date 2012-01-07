@@ -29,14 +29,21 @@ class Stack( object ) :
 		return 0 > self.top
 	
 	def push( self, val ) :
+		' it turns out mixing these techniques incurs complexity '
 		self.top += 1
-		self.stak.append( val )
+		if len( self.stak ) == self.top :
+			# then I have maxed the list size and pushing will overflow
+			self.stak.append( val )
+		else :
+			# I am overwriting old values
+			self.stak[ self.top ] = val
 
 	def printStack( self ) :
-		# lord, python for loops.
+		# lord, python For loops.
 		if Stack.notEmpty( self ) :
-			for ind in range( 0, self.top ) :
+			print "stack:\t",
+			for ind in range( 0, self.top + 1 ) :
 				print "%s " % self.stak[ ind ],
-			print
+			print "\ntop is %d" % self.top
 		else :
 			print "Stack Empty"
