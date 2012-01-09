@@ -16,6 +16,8 @@ class Stack( object ) :
 		
 	def peek( self ) :
 		" This is why, lists don't appear to offer peek "
+		# they do, but you have to keep track of top then, don't you
+		# which means TADA creating a stack class. STL ftw.
 		if Stack.empty( self ) :
 			print "fail"
 			exit( 1 )
@@ -44,6 +46,6 @@ class Stack( object ) :
 			print "stack:\t",
 			for ind in range( 0, self.top + 1 ) :
 				print "%s " % self.stak[ ind ],
-			print "\ntop is %d" % self.top
+			print
 		else :
 			print "Stack Empty"

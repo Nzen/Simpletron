@@ -5,109 +5,111 @@
 # convert & evaluate an infix equation as postfix:
 # ( 6 + 2 ) * 5 - 8 / 4 ==>> 6 2 + 5 * 8 4 / -
 
-# for some reason, above becomes 6 2 + 5 8 * + 4 + ; eval makes that to be 6
-
 import stack
 
 def isOperator( opDict, candidate ) :
 	return candidate in opDict
 	
 def higherPrecedence( opDic, focusOp, fromTempOp ) :
-	if fromTempOp.isdigit( ) :
+	focus = opDic[ focusOp ]
+	stored = opDic[ fromTempOp ]
+	if "(" == stored :
 		return False
-	foc = opDic[ focusOp ]
-	temp = opDic[ fromTempOp ]
-	return temp >= foc # I think it is fouling because I numbered operators backwards and the stack doesn't delete?
-	# flipping it empties the stack of the initial parenthesis
+	else :
+		return focus <= stored
 	
 def convertSilently( infixString ) :
-	' frozen until convertVerbosely works as expected, ie this does NOT work '
-	operators = { "(": 0, ")": 1, "/": 2, "*": 3, "+": 4, "-": 5 } # so it wouldn't reInit every time
-	# while my inclination is to find a python enum equivalent, the dict handles quietly
-	temp = stack.Stack( )
+	' no outputs of operations '
+	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2 }
+	opStack = stack.Stack( )
 	infix = infixString.split( ' ' )
 	postFix = [ ]
 	ind = 0
 	next = 0
-	temp.push( "(" )
+	opStack.push( "(" )
 	infix.append( ")" )
 	char = ""
 	bound = len( infix )
 	
-	while ( temp.notEmpty( ) and bound > ind ) :
-	# Deitel's spec says the temp stack is enough, but I'm overflowing infix
-	# for now, I'm going to nix that explicitly and recheck the algorithm later
+	while ( bound > ind ) :
 		char = infix[ ind ]
 		if char.isdigit( ) :
 			postFix.append( char )
 		elif "(" is char :
-			temp.push( char )
+			opStack.push( char )
 		elif isOperator( operators, char ) :
-			while higherPrecedence( operators, char, temp.peek( ) ) : # or maybe just do this once & continue?
-				postFix.append ( temp.pop( ) )
-			temp.push( char )
+			while higherPrecedence( operators, char, opStack.peek( ) ) : # or maybe just do this once & continue?
+				postFix.append ( opStack.pop( ) )
+			opStack.push( char )
 		elif ")" is char :
-			while "(" != temp.peek( ) :
-				postFix.append( temp.pop( ) )
+			while opStack.peek( ) is not "(":
+				postFix.append( opStack.pop( ) )
 		else :
 			print "um, what is %s?" % char
 		ind += 1
+	while opStack.notEmpty( ) :
+		if opStack.peek( ) is not "(" :
+			postFix.append ( opStack.pop( ) )
+		else :
+			opStack.pop( )
 	
 	return postFix
 
 def convertVerbosely( infixString ) :
-	' I didn"t want to muddy the other one with 1000 if statements '
-	operators = { "(": 0, "/": 1, "*": 2, "+": 3, "-": 4 } # so it wouldn't reInit every time
-	temp = stack.Stack( )
+	' I didn"t want to muddy the program with 1000 checks if in Debug_Mode '
+	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2 }
+	opStack = stack.Stack( )
 	infix = infixString.split( ' ' )
 	postFix = [ ]
 	ind = 0
 	next = 0
-	temp.push( "(" )
+	opStack.push( "(" )
 	infix.append( ")" )
 	char = ""
 	bound = len( infix )
 	
-	while ( temp.notEmpty( ) and bound > ind ) :
-	# Deitel's spec says the temp stack is enough, but I'm overflowing infix
-	# for now, I'm going to nix that explicitly and recheck the algorithm later
+	while ( bound > ind ) :
 		char = infix[ ind ]
 		print "char is %s" % char
 		if char.isdigit( ) :
 			print "  is digit"
 			postFix.append( char )
 		elif "(" is char :
-			temp.push( char )
+			opStack.push( char )
 		elif isOperator( operators, char ) :
 			print "  it's an operator"
-			while higherPrecedence( operators, char, temp.peek( ) ) : # or maybe just do this once & continue?
-				print "\tchar, %s is <= top of stack, %s" % ( char, temp.peek( ) )
-				postFix.append ( temp.pop( ) )
-			temp.push( char )
+			if opStack.notEmpty( ) :
+				while opStack.notEmpty( ) and higherPrecedence( operators, char, opStack.peek( ) ) :
+					#print "\tchar, %s is <= top of stack, %s" % ( char, opStack.peek( ) )
+					postFix.append ( opStack.pop( ) )
+			opStack.push( char )
 		elif ")" is char :
 			print "time to search for the left parenthesis"
-			while "(" != temp.peek( ) :
-				print "\tfound %s, that's going onto postFix" % temp.peek( )
-				postFix.append( temp.pop( ) )
+			while "(" != opStack.peek( ) :
+				print "\tfound %s, that's going onto postFix" % opStack.peek( )
+				postFix.append( opStack.pop( ) )
+			# discard ( ?
 		else :
 			print "um, what is %s?" % char
 		ind += 1
 		print "ind is %d\n" % ind
 		print "postfix : %s" % postFix
-		temp.printStack( )
+	while opStack.notEmpty( ) :
+		if opStack.peek( ) is not "(" :
+			postFix.append ( opStack.pop( ) )
+		else :
+			opStack.pop( )
 	return postFix
 
 def convertToPostFix( infixString, verbose ) :
-	postFix = []
 	if verbose :
-		postFix = convertVerbosely( infixString )
+		return convertVerbosely( infixString )
 	else :
-		postFix = convertSilently( infixString )
-	return postFix
+		return convertSilently( infixString )
 
 
 '''
-Dijkstra's algorithm. Yeah, I thought theirs was a little underexplained
+	Dijkstra's algorithm. Yeah, I thought theirs was a little underexplained
 Read a token.
 If the token is a number, then add it to the output queue.
 If the token is a function token, then push it onto the stack.
@@ -115,9 +117,9 @@ If the token is a function argument separator (e.g., a comma):
 	Until the token at the top of the stack is a left parenthesis, pop operators off the stack onto the output queue. If no left parentheses are encountered, either the separator was misplaced or parentheses were mismatched.
 If the token is an operator, o1, then:
 	while there is an operator token, o2, at the top of the stack, and
-		either o1 is left-associative and its precedence is less than or equal to that of o2,
-		or o1 is right-associative and its precedence is less than that of o2,
-	pop o2 off the stack, onto the output queue;
+	- either o1 is left-associative and its precedence is less than or equal to that of o2,
+			or o1 is right-associative and its precedence is less than that of o2,	NOTE he's referrring to the exponentiation operator
+		pop o2 off the stack, onto the output queue;
 	push o1 onto the stack.
 If the token is a left parenthesis, then push it onto the stack.
 If the token is a right parenthesis:

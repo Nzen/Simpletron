@@ -9,16 +9,16 @@ def isOperator( opList, candidate ) :
 	
 def evaluate( yVal, operator, xVal ) :
 	if '+' is operator :
-		print "%d + %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) + int( xVal ) )
+		#print "%d + %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) + int( xVal ) )
 		return int( yVal ) + int( xVal )
 	elif '-' is operator :
-		print "%d - %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) - int( xVal ) )
+		#print "%d - %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) - int( xVal ) )
 		return int( yVal ) - int( xVal )
 	elif '*' is operator :
-		print "%d * %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) * int( xVal ) )
+		#print "%d * %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) * int( xVal ) )
 		return int( yVal ) * int( xVal )
 	elif '/' is operator :
-		print "%d / %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) / float( xVal ) )
+		#print "%d / %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) / float( xVal ) )
 		return int( yVal ) / float( xVal )
 	else :
 		print "  Unknown operator, undefined behavior mode activated"
@@ -26,7 +26,7 @@ def evaluate( yVal, operator, xVal ) :
 
 def evaluatePostfix( postfix ) :
 	' evaluates a postfix expression, I"m assuming the client sends a list of strings '
-	print "\tevaluate post %s" % postfix
+	#print "\tevaluate post %s" % postfix
 	operators = [ "/", "*", "+", "-" ]
 	tempVals = stack.Stack( )
 	index = 0

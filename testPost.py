@@ -5,10 +5,11 @@
 import postFixer
 import postFixEval
 
-test = "( 6 + 2 ) * 5 - 8 / 4"
+#test = "( 6 + 2 ) * 5 - 8 / 4"
+test = "4 * ( 6 - 2 / 3 ) / 5 - 1"
 print test
-print "test should be 38"
 
-stepOne = postFixer.convertToPostFix( test, True ) # verbose mode
+stepOne = postFixer.convertToPostFix( test, False ) # verbose mode
+print stepOne
 #stepOne = [ '6', '2', '+', '5', '*', '8', '4', '/', '-' ]
-print postFixEval.evaluatePostfix( stepOne )
+#print postFixEval.evaluatePostfix( stepOne )
