@@ -34,3 +34,28 @@ class Ram( object ):
 				dumpSite.write( '\n' + str( endl ) + '\t' ) # 00xx
 			dumpSite.write( str( nn ).rjust( 4, '0' ) + '\t' ) # doesn't need to be \n\r
 			endl += 1
+			
+	def loader( self, files ) :
+		" I decided it is ram's responsibility to load itself "
+		memNext = 0
+		temp = 0
+		try:
+			for nn in files :
+				hdSector = open( nn )
+				for line in hdSector:
+					if not line.startswith( "##" ) :
+						if ram.exceedAddrBound( self, memNext ) :
+							continue
+						else :
+							ram.setAt( self, memNext, int( line[ :-1 ] ) )
+							memNext += 1
+					else:
+						break # so I can put comments below that line
+						# I should consider cutting this aspect once I have a compiler
+						# but still, then I can comment it afterward? Dude, do you
+						# put comments in binaries? well, binaries are not for education.
+					temp += 1
+				hdSector.close( )
+		except :
+			print "oh shit, file not found probably"
+			# I'll have to figure out that part, but it has been tested in comp.py
