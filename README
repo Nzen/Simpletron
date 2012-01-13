@@ -19,8 +19,8 @@ Accumulator, IR, PC; RAM of 100 integers.
 	GOTOZERO = 31xx
 	GOTONEG = 32xx
 	LOAD = 40xx
-(Where xx is the address of the indirected value of the instruction.)
-Obviously, stop is unary. The math operations use the directed value with whatever is in the accumulator.
+xx is the address of the value to operate on. Obviously, stop is unary. The math operations use the
+directed value with whatever is in the accumulator.
 
 SIMPLE COMPILER GRAMMER:
 
@@ -31,14 +31,11 @@ E: L | D | L O D | L O E
 G: goto
 I: if
 L: { a-z } | LL
-O: + | - | * | / | := | > | < | ==
+O: + | - | * | / | = | > | < | ==
 X: end
 
 It has been a long time, and rewriting this grammer has become tedious, but I think that conforms. The point
 is that a line involves [line number] [command] [expression] following the forms that the commands demand.
-Deitel's spec actually uses the single = serve as assignment, but this toy isn't for comfortable production.
-Frankly, I am not demographically aware enough to know the extent that = vs := helps any. Perhaps if/when
-I try using smalltalk I'll decide whether it is annoying or induces helpful caution.
 
 SIMPLE COMMANDS
 

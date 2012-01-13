@@ -3,9 +3,92 @@
 # begun 12 1 11
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
-import ram
+from sys import argv
 import postFixer
 import symbolTableEntry
+
+def writeSeparatedSmlData( failBlog, smlData, instructionLimit, valueLimit, ramSize ) :
+	index = 0
+	while index < instructionLimit :
+		failBlog.write( smlData[ index ] )
+		index += 1
+	failBlog.write( " - data section" )
+	index = valueLimit
+	while index < ramSize :
+		failBlog.write( smlData[ index ] )
+
+def writeInterestingFlags( failBlog, lineFlags, ramSize ) :
+	ind = 0
+	while ind < ramSize :
+		if lineFlags[ ind ] >= 0 :
+			failBlog.write( ind + " " + lineFlags[ ind ] )
+		ind += 1
+
+def fail( symbolTable, lineFlags, smlData, instructionLimit, valueLimit, ramSize ) :
+	failBlog = open( "compilerState.txt", 'w' )
+	failBlog.write( "Finished instructions" )
+	if valueLimit - instructionLimit > 10 :
+		# if it's worth skipping the unwritten void in between instructions & data
+		writeSeparatedSmlData( failBlog, smlData, smlData, instructionLimit, valueLimit, ramSize )
+	else :
+		for nn in smlData :
+			failBlog.write( nn )
+	failBlog.write( "Symbol Table" )
+	for nn in symbolTable :
+		failBlog.write( nn ) # I'll need to make that tostring equivalent
+	failBlog.write( "flags set" )
+	writeInterestingFlags( failBlog, lineFlags, ramSize )
+	failBlog.close( )
+	
+def searchForSymbol( symbol, symbolTable, limit ) :
+	ind = 0
+	while ind <= limit :
+		if symbolTable[ ind ].getSymbol == symbol :
+			return ind
+		ind += 1
+	return -1
+
+def comment( ) :
+	symbolTable[ nextS ].setLocation( instructionCounter )
+	nextS += 1
+	
+def finished( ) :
+		sharedMem.setAt( instructionCounter, STOP )
+		nextS += 1
+		instructionCounter += 1
+
+def userInput( ) :
+		searchForSymbol( sym, symbolTable, nextSym )
+		# set if unfound, ie -1
+		# write to ram
+
+def screenOutput( ) :
+		searchForSymbol( sym, symbolTable, nextSym )
+		# if unfound make anew
+		# else, using found's location
+		# ram set : write
+
+def assignment( ) :
+		# convert rest to postfix
+		# eval postfix :
+			# push mem locations
+			# save commands rather than evaluating
+			# save sub expression in location
+			# store that answer
+def branch( ) :
+		# search symbolTable for the line number
+		searchForSymbol( sym, symbolTable, nextSym )
+		# found:
+			# set ram with the goto at that location in the location of that symbol
+		# else
+			# flag[ instructionCounter ] = lineNumberSymbolReferenced
+def conditional( ) :
+		# verify the rest of the line
+		# generate & save instructions for the conditional
+		# search for ref line
+		searchForSymbol( sym, symbolTable, nextSym )
+		# store if found,
+		# flag if not
 
 STOP = 0000
 READ = 1000
@@ -24,69 +107,41 @@ LINE = 0
 VAR = 1
 CONST = 2
 
+commandList = {
+	"end" : finished,
+	"remark" : comment,
+	"let" : assignment,
+	"if" : conditional,
+	"goto" : branch,
+	"input" : userInput,
+	"print" : screenOutput,
+	}
 symbolTable = [ symbolTableEntry.TableEntry( ) ] * RAMSIZE
+# I may would make this a dict if it didn't also have 2 vars per name. Research is in order.
 lineFlags[ -1 ] * RAMSIZE
+smlData = [ 0 ] * RAMSIZE
 instructionCounter = 0
 dataCounter = RAMSIZE
-sharedMem = ram.Ram( )
 nextS = 0 # next Symbol table entry in the list
 
-# ask or get from the arguments
-openFile( fileName )
-while not EOF :
-	line = readline( )
+# ask or get from the arguments, only one at a time for the moment
+fileName = argv[ 1 ]
+simpleProgram = open( fileName )
+# FIRST PASS
+for line in simpleProgram :
 	segment = line.split( ' ' )
-	## check if this line number is greater than last, else syntax? error
+	''' check if this line number is greater than last, else syntax error '''
 	# store the line number
 	symbolTable[ nextS ].setType( LINE )
 	symbolTable[ nextS ].setSymbol( segment[ 0 ] ) # in this case, the line number
-	# handle REMARK
-	command = segment[ 1 ]
-	if "remark" == command :
-		symbolTable[ nextS ].setLocation( instructionCounter )
-		nextS += 1
+	comm = segment[ 1 ]
+	if comm not in commandList :
+		print "unrecognized command at %s" % symbolTable[ nextS ].getSymbol( )
 		continue
 	else :
-		instructionCounter += 1
+		newInstruc = commandList[ comm ]
+		newInstruc( ) # providing it with anything it may need
+		
+		instructionCounter += 1 # wait one second. That might foul the first instruction FIX?
 		symbolTable[ nextS ].setLocation( instructionCounter )
 		nextS += 1
-		# handleCommand( command, segment[ 2: ], everythingElse )
-		# I'm not sure whether I want to make it here or in a function.
-		# function is better but I have to pass it a bunch of stuff. hmm
-		# should I be using a dict to reference the functions instead?
-		# form of simpleCommands[ command ]
-		if "end" == command :
-			sharedMem.setAt( instructionCounter, STOP )
-			nextS += 1
-			instructionCounter += 1
-			continue
-		elif "input" == command :
-			# search for symbol
-			# set if unfound
-			# write to ram
-		elif "print" == command :
-			# search for symbol
-			# if unfound make anew
-			# else, using found's location
-			# ram set : write
-		elif "let" == command :
-			# convert rest to postfix
-			# eval postfix :
-				# push mem locations
-				# save commands rather than evaluating
-				# save sub expression in location
-				# store that answer
-		elif "goto" == command :
-			# search symbolTable for the line number
-			# found:
-				# set ram with the goto at that location in the location of that symbol
-			# else
-				# flag[ instructionCounter ] = lineNumberSymbolReferenced
-		elif "if" == command :
-			# verify the rest of the line
-			# generate & save instructions for the conditional
-			# search for ref line
-			# store if found,
-			# flag if not
-		else :
-			print "unrecognized command at %s" % symbolTable[ nextS - 1 ].getSymbol( )

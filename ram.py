@@ -44,10 +44,10 @@ class Ram( object ):
 				hdSector = open( nn )
 				for line in hdSector:
 					if not line.startswith( "##" ) :
-						if ram.exceedAddrBound( self, memNext ) :
+						if Ram.exceedAddrBound( self, memNext ) :
 							continue
 						else :
-							ram.setAt( self, memNext, int( line[ :-1 ] ) )
+							Ram.setAt( self, memNext, int( line[ :-1 ] ) )
 							memNext += 1
 					else:
 						break # so I can put comments below that line
@@ -56,6 +56,6 @@ class Ram( object ):
 						# put comments in binaries? well, binaries are not for education.
 					temp += 1
 				hdSector.close( )
-		except :
+		except IOError:
 			print "oh shit, file not found probably"
 			# I'll have to figure out that part, but it has been tested in comp.py
