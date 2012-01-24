@@ -1,0 +1,12 @@
+5 remark sum 1 to x
+10 input x
+15 remark check y == x goto 60
+25 remark increment y
+30 let y = y + 1
+35 remark add y to total
+40 let t = t + y
+45 remark loop y
+50 goto 20
+55 rem output result
+60 print t
+99 end

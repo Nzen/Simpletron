@@ -1,0 +1,13 @@
+10 remark determine and print the sum of two integers
+15 remark
+20 remark input the two integers
+30 input a
+40 input b
+45 remark
+50 remark add & store two integers into c
+60 let c = a + b
+65 remark
+70 remark print the result
+80 print c
+90 remark terminate program
+99 end

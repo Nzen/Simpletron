@@ -1,0 +1,14 @@
+10 remark determine and print the larger of two integers
+20 input s
+30 input t
+32 remark
+35 remark test if s >= t
+40 if s >= t goto 90
+45 remark
+50 remark t > s, print t
+60 remark print t
+70 goto 99
+75 remark
+80 remark s >= t, print s
+90 print s
+99 end
