@@ -59,6 +59,7 @@ class Cpu( object ):
 				# this is a convenience, it may not be used if cpu writes to that location, or a goto
 				self.pc += 1
 	
+	# each may be trivial, but extract for dict function magic
 	def execute( self ):
 		' elif field of the ISA '
 		if Cpu.STOP == self.opCode:
@@ -149,9 +150,4 @@ class Cpu( object ):
 		self.mem.coreDump( dump )
 		dump.close( )
 		self.running = False
-		
-		
-		
-		
-		
 		
