@@ -5,47 +5,135 @@
 import compiler
 
 def test_syntaxError( compiler ) :
+	'handle syntax error'
 	# syntaxError( self, why ) :
 	compiler.syntaxError( "testing errors" )
 
 def test_validateCommandType( compiler ) :
+	'validate command type'
 	# checkLineNumbersIncreasing( self, newLineNumber ) :
-	pass
+	return False
 
 def test_searchForSymbol( compiler ) :
-	compiler.searchForSymbol( "x" )
-
+	'search for symbol'
+	#I hope I"m doing it wrong because this style of testing is pretty tedious'
+	# saving state
+	cS = compiler.currSym
+	one = compiler.symbolTable[ 0 ]
+	two = compiler.symbolTable[ 1 ]
+	three = compiler.symbolTable[ 2 ]
+	
+	# set up environ
+	compiler.symbolTable[ 0 ].symbol = "dummy"
+	compiler.symbolTable[ 0 ].type = tool.VAR
+	compiler.symbolTable[ 1 ].symbol = 5
+	compiler.symbolTable[ 1 ].type = tool.LINE
+	compiler.symbolTable[ 2 ].symbol = 5
+	compiler.symbolTable[ 2 ].type = tool.CONST
+	compiler.currSymb = 2
+	
+	# test
+	result1 = compiler.searchForSymbol( "fail", tool.LINE )
+	result2 = compiler.searchForSymbol( 5, tool.CONST )
+	
+	# reset to state
+	compiler.currSymb = cS
+	compiler.symbolTable[ 0 ] = one
+	compiler.symbolTable[ 1 ] = two
+	compiler.symbolTable[ 2 ] = three
+	
+	# publish
+	return result1 == -1 and result2 == 2
+	'''
+	symbolTable
+	self.lineFlags
+	self.smlData
+	self.instructionCounter
+	self.dataCounter
+	self.currSym
+	self.lastLine
+	'''
+#compiler.
 def test_programTooBig( compiler ) :
-	pass
+	'program data overlap'
+	iC = compiler.instructionCounter
+	dC = compiler.dataCounter
+	# condition for failure
+	compiler.instructionCounter = compiler.dataCounter
+	result = compiler.programTooBig( )
+	compiler.dataCounter = dC
+	compiler.instructionCounter = iC
+	return result
 
 def test_reserveNewSymbol( compiler ) :
-	pass
+	'reserve new symbol'
+	return False
 
 def test_comment( compiler ) :
-	pass
+	'handle comment'
+	return False
 
 def test_finished( compiler ) :
-	pass
+	'create halt instruction'
+	return False
 
 def test_userInput( compiler ) :
-	pass
+	'create i/o wait flag'
+	return False
 
 def test_screenOutput( compiler ) :
-	pass
+	'create printout'
+	return False
 
 def test_branch( compiler ) :
-	pass
+	'create naive jump'
+	return False
 
 def test_conditional( compiler ) : 
-	pass
+	'create conditional jump'
+	return False
 
 def test_assignment( compiler ) :
-	pass
+	'create assignment from expression'
+	return False
 
 tool = compiler.SCompiler( )
+
+allFunctions = (
+	test_reserveNewSymbol,
+	test_comment,
+	test_finished,
+	test_userInput,
+	test_screenOutput,
+	test_branch,
+	test_conditional,
+	test_assignment,
+	test_screenOutput,
+	test_branch,
+	test_programTooBig,
+	test_searchForSymbol,
+	test_validateCommandType,
+	test_syntaxError
+	)
+
+# Oh yeah, that's what I'm talking about
+for test in allFunctions :
+	if test( tool ) :
+		print "Yes ",
+	else :
+		print "\tNo ", 
+	print test.__doc__ 
+
+'''
 test_validateCommandType( tool )
-test_searchForSymbol( tool )
-test_programTooBig( tool )
+if test_searchForSymbol( tool ) :
+	print "Yes symbol search"
+else :
+	print "\tNo symbol search"
+if test_programTooBig( tool ) :
+	print "Yes program too big" # or write to a log
+else :
+	print "\tNo program too big"
 test_reserveNewSymbol( tool )
 test_comment( tool )
 test_finished( tool )
@@ -55,20 +143,4 @@ test_branch( tool )
 test_conditional( tool )
 test_assignment( tool )
 test_syntaxError( tool )
-'''
-	# validateCommandType( self, word ) :
-	# searchForSymbol( self, sought, typeSought )
-	# def programTooBig( self ) :
-	# def reserveNewSymbol( self, symb, theType )
-	# def comment( self, restOfLine )
-	# def finished( self, restOfLine )
-	# def userInput( self, restOfLine )
-	# def screenOutput( self, restOfLine ) :
-	# def branch( self, restOfLine ) :
-	# def conditional( self, restOfLine ) : 
-	# def assignment( self, restOfLine ) :
-	# def firstPass( self, line ) :
-	# def resolveForwardReferencedLines( self ) :
-	# def saveProgram( self ) :
-	# def secondPass( self ) :
 '''
