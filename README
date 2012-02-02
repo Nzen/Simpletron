@@ -26,7 +26,7 @@ operations use the directed value with whatever is in the accumulator.
 SIMPLE COMPILER GRAMMER:
 
 A: D X | D C E | D I E G D
-C: remark | input | let | print
+C: rem | input | let | print
 D: { 0-9 } | DD
 E: L | D | L O D | L O E
 G: goto
@@ -41,7 +41,7 @@ following the forms that the commands demand.
 
 SIMPLE COMMANDS
 
-remark - commented string
+rem - commented string
 input - value from terminal
 let - assign via x = expression
 print - print to terminal
