@@ -1,11 +1,11 @@
-5 remark sum 1 to x
+5 rem sum 1 to x
 10 input x
-15 remark check y == x goto 60
-25 remark increment y
+15 rem check y == x goto 60
+25 rem increment y
 30 let y = y + 1
-35 remark add y to total
+35 rem add y to total
 40 let t = t + y
-45 remark loop y
+45 rem loop y
 50 goto 20
 55 rem output result
 60 print t

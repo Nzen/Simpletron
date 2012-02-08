@@ -18,11 +18,11 @@ def higherPrecedence( opDic, focusOp, fromTempOp ) :
 	else :
 		return focus <= stored
 	
-def convertSilently( infixString ) :
+def convertSilently( infix ) :
 	' no outputs of operations '
 	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2 }
 	opStack = stack.Stack( )
-	infix = infixString.split( ' ' )
+	#infix = infixString.split( ' ' )
 	postFix = [ ]
 	ind = 0
 	next = 0
@@ -34,6 +34,8 @@ def convertSilently( infixString ) :
 	while ( bound > ind ) :
 		char = infix[ ind ]
 		if char.isdigit( ) :
+			postFix.append( char )
+		elif char.isalpha( ) :
 			postFix.append( char )
 		elif "(" is char :
 			opStack.push( char )
@@ -55,11 +57,11 @@ def convertSilently( infixString ) :
 	
 	return postFix
 
-def convertVerbosely( infixString ) :
+def convertVerbosely( infix ) :
 	' I didn"t want to muddy the program with 1000 checks if in Debug_Mode '
 	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2 }
 	opStack = stack.Stack( )
-	infix = infixString.split( ' ' )
+	#infix = infixString.split( ' ' )
 	postFix = [ ]
 	ind = 0
 	next = 0
@@ -73,6 +75,8 @@ def convertVerbosely( infixString ) :
 		print "char is %s" % char
 		if char.isdigit( ) :
 			print "  is digit"
+			postFix.append( char )
+		elif char.isalpha( ) :
 			postFix.append( char )
 		elif "(" is char :
 			opStack.push( char )

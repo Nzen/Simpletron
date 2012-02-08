@@ -1,13 +1,13 @@
-10 remark calculate squares of several integers
+10 rem calculate squares of several integers
 20 input j
-23 remark
-25 remark test for sentinel
+23 rem
+25 rem test for sentinel
 30 if j == -9999 goto 99
-33 remark
-35 remark calculate square of j, store in k
+33 rem
+35 rem calculate square of j, store in k
 40 let k = j * j
 50 print k
-53 remark
-55 remark loop to get next j
+53 rem
+55 rem loop to get next j
 60 goto 20
 99 end

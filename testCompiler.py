@@ -9,10 +9,39 @@ def test_syntaxError( compiler ) :
 	# syntaxError( self, why ) :
 	compiler.syntaxError( "testing errors" )
 
-def test_validateCommandType( compiler ) :
+def test_validateCommandType( compiler ) : # works but diverges with reality? 12 2 7
 	'validate command type'
-	# checkLineNumbersIncreasing( self, newLineNumber ) :
-	return False
+	endWorked = True
+	remWorked = True
+	letWorked = True
+	ifWorked = True
+	gotoWorked = True
+	inputWorked = True
+	printWorked = True
+	bananaDidnt = True
+	commandDict = {
+		"end" : endWorked,
+		"rem" : remWorked,
+		"let" : letWorked,
+		"if" : ifWorked,
+		"goto" : gotoWorked,
+		"input" : inputWorked,
+		"print" : printWorked,
+		}
+	# test stuff that shouldn't work
+	compiler.validateCommandType( "banana" )
+	bananaDidnt = compiler.FAILED
+	compiler.FAILED = False
+	# test stuff that should
+	compiler.validateCommandType( "rem" )
+	remWorkedWorked = not compiler.FAILED # since I am asking if they worked
+	compiler.FAILED = False
+	# and now everything
+	for command in commandDict :
+		compiler.validateCommandType( command )
+		commandDict[ command ] = not compiler.FAILED # since I am asking if they worked
+		compiler.FAILED = False
+	return endWorked and remWorked and letWorked and ifWorked and gotoWorked and inputWorked and printWorked and bananaDidnt
 
 def test_searchForSymbol( compiler ) :
 	'search for symbol'
@@ -22,6 +51,7 @@ def test_searchForSymbol( compiler ) :
 	one = compiler.symbolTable[ 0 ]
 	two = compiler.symbolTable[ 1 ]
 	three = compiler.symbolTable[ 2 ]
+	# perhaps extract versions of this and then decide which via [enums] or something
 	
 	# set up environ
 	compiler.symbolTable[ 0 ].symbol = "dummy"
@@ -53,7 +83,7 @@ def test_searchForSymbol( compiler ) :
 	self.currSym
 	self.lastLine
 	'''
-#compiler.
+
 def test_programTooBig( compiler ) :
 	'program data overlap'
 	iC = compiler.instructionCounter
@@ -61,6 +91,7 @@ def test_programTooBig( compiler ) :
 	# condition for failure
 	compiler.instructionCounter = compiler.dataCounter
 	result = compiler.programTooBig( )
+	#
 	compiler.dataCounter = dC
 	compiler.instructionCounter = iC
 	return result
@@ -116,15 +147,19 @@ allFunctions = (
 	test_syntaxError
 	)
 
+compiler.SCompiler.RAMSIZE = 30
+simple = compiler.SCompiler( )
+print "\tusing Deitel's ex1"
+#compiler.SCompiler.TESTING = True # well that's ugly; to change a class member in another module
+simple.compile( "ex1.txt" )
+#print "validate worked? %r" % test_validateCommandType( simple )
+'''
 # Oh yeah, that's what I'm talking about
 for test in allFunctions :
-	if test( tool ) :
-		print "Yes ",
-	else :
+	if not test( tool ) :
 		print "\tNo ", 
-	print test.__doc__ 
+		print test.__doc__ 
 
-'''
 test_validateCommandType( tool )
 if test_searchForSymbol( tool ) :
 	print "Yes symbol search"
