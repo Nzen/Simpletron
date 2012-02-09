@@ -12,7 +12,7 @@ class Ram( object ):
 		self.memory[ addr ] = val
 	
 	def getFrom( self, addr ):
-		' I"m expecting the client to handle addresses out of bounds '
+		' I"m expecting the client to handle addresses out of bounds ' # really? then why have exceed? just do it.
 		return self.memory[ addr ]
 		
 	def exceedAddrBound( self, anAddr ):
@@ -35,27 +35,24 @@ class Ram( object ):
 			dumpSite.write( str( nn ).rjust( 4, '0' ) + '\t' ) # doesn't need to be \n\r
 			endl += 1
 			
-	def loader( self, files ) :
-		" I decided it is ram's responsibility to load itself "
+	def loader( self, file ) :
+		" I decided it is ram's responsibility to load itself " # I'm cutting the multifile read 12 2 8
 		memNext = 0
 		temp = 0
 		try:
-			for nn in files :
-				hdSector = open( nn )
-				for line in hdSector:
-					if not line.startswith( "##" ) :
-						if Ram.exceedAddrBound( self, memNext ) :
-							continue
-						else :
-							Ram.setAt( self, memNext, int( line[ :-1 ] ) )
-							memNext += 1
-					else:
-						break # so I can put comments below that line
-						# I should consider cutting this aspect once I have a compiler
-						# but still, then I can comment it afterward? Dude, do you
-						# put comments in binaries? well, binaries are not for education.
-					temp += 1
-				hdSector.close( )
+			hdSector = open( file )
+			for line in hdSector:
+				if not line.startswith( "##" ) :
+					if Ram.exceedAddrBound( self, memNext ) :
+						continue
+					else :
+						Ram.setAt( self, memNext, int( line[ :-1 ] ) )
+						memNext += 1
+				else:
+					break # so I can put comments below that line
+					# I thought I'd cut it but testing the compiler is much easier with comments
+				temp += 1
+			hdSector.close( )
 		except IOError:
-			print "oh shit, file not found probably"
-			# I'll have to figure out that part, but it has been tested in comp.py
+			print "File not found, perhaps it's not here with me"
+			exit( 1 )

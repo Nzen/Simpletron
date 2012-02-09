@@ -4,7 +4,7 @@
 
 import cpu
 import ram
-from sys import argv # assuming you tell me which files you want loaded from HD
+#from sys import argv # assuming you tell me which files you want loaded from HD
 
 def testRam( usb ) :
 	' unit test for ram module '
@@ -24,17 +24,16 @@ def testCpu( mem ) :
 	core = open( "core.txt", 'w' )
 	mem.coreDump( core )
 	core.close( )
-
-files = argv 
-files = files[ 1: ] # discards this script's name from the list of files
-
-ssd = ram.Ram( )
-cmd = cpu.Cpu( 0, ssd, True ) # true is for verbose mode
-
-ssd.loader( files )
-#testRam( ssd )
-#testCpu( ssd )
-cmd.run( )
+verbose = True
+#files = argv 
+#files = files[ 1: ] # discards this script's name from the list of files
+def run( files ) :
+	ssd = ram.Ram( )
+	cmd = cpu.Cpu( 0, ssd, verbose )
+	ssd.loader( files )
+	#testRam( ssd )
+	#testCpu( ssd )
+	cmd.run( )
 
 '''
 	Bad examples of using exec( ):

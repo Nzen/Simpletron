@@ -3,13 +3,15 @@
 # Might as well practice testing
 
 import compiler
+import smlPretty
+import comp
 
-def test_syntaxError( compiler ) :
+def test_syntaxError( compiler ) : # unready 12 2 8
 	'handle syntax error'
 	# syntaxError( self, why ) :
 	compiler.syntaxError( "testing errors" )
 
-def test_validateCommandType( compiler ) : # works but diverges with reality? 12 2 7
+def test_validateCommandType( compiler ) : # works, overkill? 12 2 7
 	'validate command type'
 	endWorked = True
 	remWorked = True
@@ -32,10 +34,6 @@ def test_validateCommandType( compiler ) : # works but diverges with reality? 12
 	compiler.validateCommandType( "banana" )
 	bananaDidnt = compiler.FAILED
 	compiler.FAILED = False
-	# test stuff that should
-	compiler.validateCommandType( "rem" )
-	remWorkedWorked = not compiler.FAILED # since I am asking if they worked
-	compiler.FAILED = False
 	# and now everything
 	for command in commandDict :
 		compiler.validateCommandType( command )
@@ -43,7 +41,7 @@ def test_validateCommandType( compiler ) : # works but diverges with reality? 12
 		compiler.FAILED = False
 	return endWorked and remWorked and letWorked and ifWorked and gotoWorked and inputWorked and printWorked and bananaDidnt
 
-def test_searchForSymbol( compiler ) :
+def test_searchForSymbol( compiler ) : # review 12 2 8
 	'search for symbol'
 	#I hope I"m doing it wrong because this style of testing is pretty tedious'
 	# saving state
@@ -84,7 +82,7 @@ def test_searchForSymbol( compiler ) :
 	self.lastLine
 	'''
 
-def test_programTooBig( compiler ) :
+def test_programTooBig( compiler ) : # review 12 2 8
 	'program data overlap'
 	iC = compiler.instructionCounter
 	dC = compiler.dataCounter
@@ -96,35 +94,35 @@ def test_programTooBig( compiler ) :
 	compiler.instructionCounter = iC
 	return result
 
-def test_reserveNewSymbol( compiler ) :
+def test_reserveNewSymbol( compiler ) : # unready 12 2 8
 	'reserve new symbol'
 	return False
 
-def test_comment( compiler ) :
+def test_comment( compiler ) : # unready 12 2 8
 	'handle comment'
 	return False
 
-def test_finished( compiler ) :
+def test_finished( compiler ) : # unready 12 2 8
 	'create halt instruction'
 	return False
 
-def test_userInput( compiler ) :
+def test_userInput( compiler ) : # unready 12 2 8
 	'create i/o wait flag'
 	return False
 
-def test_screenOutput( compiler ) :
+def test_screenOutput( compiler ) : # unready 12 2 8
 	'create printout'
 	return False
 
-def test_branch( compiler ) :
+def test_branch( compiler ) : # unready 12 2 8
 	'create naive jump'
 	return False
 
-def test_conditional( compiler ) : 
+def test_conditional( compiler ) : # unready 12 2 8
 	'create conditional jump'
 	return False
 
-def test_assignment( compiler ) :
+def test_assignment( compiler ) : # unready 12 2 8
 	'create assignment from expression'
 	return False
 
@@ -149,33 +147,18 @@ allFunctions = (
 
 compiler.SCompiler.RAMSIZE = 30
 simple = compiler.SCompiler( )
-print "\tusing Deitel's ex1"
+file = "monkey.txt"
+print "\tusing Deitel's %s" % file
 #compiler.SCompiler.TESTING = True # well that's ugly; to change a class member in another module
-simple.compile( "ex1.txt" )
+smlName = simple.compile( file )
 #print "validate worked? %r" % test_validateCommandType( simple )
+# it was cute the first few times to pretty by hand. I'll CUT it when I issue the final version
+smlPretty.prettify( smlName )
+comp.run( smlName )
 '''
 # Oh yeah, that's what I'm talking about
 for test in allFunctions :
 	if not test( tool ) :
 		print "\tNo ", 
 		print test.__doc__ 
-
-test_validateCommandType( tool )
-if test_searchForSymbol( tool ) :
-	print "Yes symbol search"
-else :
-	print "\tNo symbol search"
-if test_programTooBig( tool ) :
-	print "Yes program too big" # or write to a log
-else :
-	print "\tNo program too big"
-test_reserveNewSymbol( tool )
-test_comment( tool )
-test_finished( tool )
-test_userInput( tool )
-test_screenOutput( tool )
-test_branch( tool )
-test_conditional( tool )
-test_assignment( tool )
-test_syntaxError( tool )
 '''

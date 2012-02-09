@@ -1,0 +1,9 @@
+1 rem monkey wrench program, not designed to be run on simpletron
+2 rem
+3 print 5
+6 input x
+7 goto 9
+9 if 3 == 1 goto 10
+10 let x = 5
+11 let y = 6 + 5
+53 end

@@ -69,8 +69,19 @@ class SCompiler( object ) :
 		'instructions build down, data builds up. should the twain meet, Ram is full'
 		return self.instructionCounter >= self.dataCounter
 
+	def prepInstruction( self ) : # tentative 12 2 8
+		self.instructionCounter += 1
+		# unfortunately, an extra remark may temporarily exceed the limit
+		if SCompiler.programTooBig( self ) :
+			SCompiler.syntaxError( self, "Too many instructions reserved" )
+
+	def prepDataLocation( self ) :
+		self.dataCounter -= 1
+		if SCompiler.programTooBig( self ) :
+			SCompiler.syntaxError( self, "Too many variables, stack overflow" )
+
 	def searchForSymbol( self, sought, typeSought, reserve ) : # tentative 12 2 1
-		'returns index of symbol or -1 if not present'
+		'returns index in symbolTable or -1 if not present'
 		ind = 0
 		limit = self.currSym
 		while ind <= limit :
@@ -84,15 +95,14 @@ class SCompiler( object ) :
 			return -1
 	
 	def reserveNewSymbol( self, symb, theType ) : # tentative 12 2 1
-		'reserves new symbol in symbolTable & potentially in dataCounter, returns index'
+		'reserves new symbol in symbolTable & potentially in dataCounter, returns index in symbolTable'
 		self.currSym += 1
 		self.symbolTable[ self.currSym ].type = theType
 		# numerical symbols are typecast
-		self.symbolTable[ self.currSym ].symbol = int( symb ) if symb.isdigit( ) else symb # given useCase, waste?
-		self.dataCounter -= 1
-		if SCompiler.programTooBig( self ) :
-			SCompiler.syntaxError( self, "Too many variables reserved: " + symb )
-		self.symbolTable[ self.currSym ].location = self.dataCounter
+		self.symbolTable[ self.currSym ].symbol = int( symb ) if symb.isdigit( ) else symb # given use case, waste?
+		if theType is not SCompiler.LINE :
+			SCompiler.prepDataLocation( self )
+			self.symbolTable[ self.currSym ].location = self.dataCounter
 		if symb.isdigit( ) :
 			self.smlData[ self.dataCounter ] = self.symbolTable[ self.currSym ].symbol
 		# variables are initialized to 0 & updated by let or input.
@@ -121,23 +131,41 @@ class SCompiler( object ) :
 		"# halt"
 		self.smlData[ self.instructionCounter ] = SCompiler.STOP
 
-	def userInput( self, restOfLine ) : # tentative 12 1 28
+	def userInput( self, restOfLine ) : # seems to work 12 2 8
 		"# input x (meaning) store input in var x"
 		if restOfLine[ 0 ].isdigit( ) :
 			SCompiler.syntaxError( self, "Simple will not use numbers (" + restOfLine[ 0 ] + ") as variable names" )
 		where = SCompiler.searchForSymbol( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
 		self.smlData[ self.instructionCounter ] = SCompiler.READ + self.symbolTable[ where ].location
 
-	def screenOutput( self, restOfLine ) : # tentative 12 1 28
-		"# print x" # also, print a #, however all variables are initialized to 0 so be wary
-		symType = SCompiler.getType( self, restOfLine[ 0 ] )
-		where = SCompiler.searchForSymbol( self, restOfLine[ 0 ], symType, not SCompiler.RESERVE ) ##seems okay, rewrite these
+	def screenOutput( self, restOfLine ) : # FIX 12 2 8
+		"# print x" # or a number
+		symType = SCompiler.getType( self, restOfLine[ 0 ] )	# POINTS AT AN INSTRUCTION
+		where = SCompiler.searchForSymbol( self, restOfLine[ 0 ], symType, not SCompiler.RESERVE )
 		self.smlData[ self.instructionCounter ] = SCompiler.WRITE + self.symbolTable[ where ].location
 
-	def found( self, index ) :  # ok 12 1 28
+	def validateIfgotoExpression( self, expression ) : # tentative 12 2 8
+		'x > y goto #'
+		conditionals = ( "==", ">=", "<=", ">", "<" )
+		if len( expression ) < 4 :
+			SCompiler.syntaxError( self, "Not enough symbols in if goto command" )
+		elif not expression[ 0 ].isalnum( ) :
+			SCompiler.syntaxError( self, "First symbol in a comparison must be a number or letter" )
+		elif expression[ 1 ] not in conditionals :
+			SCompiler.syntaxError( self, "Second symbol in a conditional must be an operator: >, <, ==, >=, <=" )
+		elif not expression[ 2 ].isalnum( ) :
+			SCompiler.syntaxError( self, "Third symbol in a comparison must be a number or letter" )
+		elif expression[ 3 ] != "goto" :
+			SCompiler.syntaxError( self, "The goto command must follow the if's conditional expression" )
+		elif not expression[ 4 ].isdigit( ) :
+			SCompiler.syntaxError( self, "goto must be followed by a line number" )
+		else :
+			return # I just like completing the elif field
+
+	def found( self, index ) :  # ok 12 2 8
 		return index >= 0
 
-	def goto( self, opType, lineNumIndex, unresolved ) : # tentative 12 2 1
+	def goto( self, opType, lineNumIndex, unresolved ) : # tentative 12 2 8
 		'again I"ve run into the symTable/instrCount ambiguity of lineNumIndex'
 		if unresolved :
 			# flag for later substitution
@@ -147,30 +175,26 @@ class SCompiler( object ) :
 		else :
 			self.smlData[ self.instructionCounter ] = opType + self.symbolTable[ lineNumIndex ].location
 
-	def branch( self, restOfLine ) : # tentative 12 2 1
+	def branch( self, restOfLine ) : # FIX 12 2 8
 		"#1 goto #2"
-		if not restOfLine[ 0 ].isdigit( ) :
+		if not restOfLine[ 0 ].isdigit( ) :	# POINTS AT ITSELF?? maybe index? or resolving is failing
 			SCompiler.syntaxError( self, "can not jump to variable value line, only constants" )
 		# search symbolTable for the referenced line number
-		where = SCompiler.searchForSymbol( self, restOfLine[ 0 ], SCompiler.LINE, not SCompiler.RESERVE )
-		SCompiler.goto( self, SCompiler.GOTO, where, found( where ) )
-
-	def prepInstruction( self ) : # tentative 12 2 1
-		self.instructionCounter += 1
-		if SCompiler.programTooBig( self ) :
-			SCompiler.syntaxError( self, "Too many instructions reserved" )
+		index = SCompiler.searchForSymbol( self, restOfLine[ 0 ], SCompiler.LINE, not SCompiler.RESERVE )
+		SCompiler.goto( self, SCompiler.GOTO, index, SCompiler.found( self, index ) )
 
 	def saveNonLine( self, symbol ) : # tentative 12 2 1
 		'returns symbolTable index of saved'
-		firstType = SCompiler.getType( self, symbol )
-		whereX = SCompiler.searchForSymbol( self, symbol, firstType, SCompiler.RESERVE )
+		type = SCompiler.getType( self, symbol )
+		index = SCompiler.searchForSymbol( self, symbol, type, SCompiler.RESERVE )
+		return index
 
-	def simulateOrEquals( self ) : # tentative 12 2 1
-		where = SCompiler.searchForSymbol( self, 1, SCompiler.CONST, SCompiler.RESERVE )
+	def simulateOrEquals( self ) : # tentative 12 2 8
+		where = SCompiler.searchForSymbol( self, "1", SCompiler.CONST, SCompiler.RESERVE )
 		SCompiler.prepInstruction( self )
 		self.smlData[ self.instructionCounter ] = SCompiler.SUBTR + self.symbolTable[ where ].location
 
-	def conditionalProduction( self, first, second, orEqual ) : # tentative 12 2 1
+	def conditionalProduction( self, first, second, orEqual ) : # tentative 12 2 8
 			'loads first, subtracts second, subtracts another if orEqualTo appropriate'
 			# save: load first to acc
 			self.smlData[ self.instructionCounter ] = SCompiler.LOAD + self.symbolTable[ first ].location
@@ -180,34 +204,61 @@ class SCompiler( object ) :
 			if orEqual :
 				SCompiler.simulateOrEquals( self )
 
-	def conditional( self, restOfLine ) : # tentative 12 2 5
+	def conditional( self, restOfLine ) : # FIX 12 2 8
 		"# if x > y goto #2"
-		SCompiler.validateRestExpression( self, restOfLine )
+		orEquals = True
+		SCompiler.validateIfgotoExpression( self, restOfLine )
 		whereX = SCompiler.saveNonLine( self, restOfLine[ 0 ] )
 		comparison = restOfLine[ 1 ]
-		whereY =  SCompiler.saveNonLine( self, restOfLine[ 2 ] )
+		whereY = SCompiler.saveNonLine( self, restOfLine[ 2 ] )
 		# resolve conditional expression
 		if comparison == "==" :
-			SCompiler.conditionalProduction( self, whereX, whereY, FALSE )
+			SCompiler.conditionalProduction( self, whereX, whereY, orEquals ) ## this didn't emit a gotozero
 			whereLine = SCompiler.searchForSymbol( self, restOfLine[ 4 ], SCompiler.LINE, not SCompiler.RESERVE )
-			SCompiler.goto( self, SCompiler.GOTOZERO, whereLine, found( whereLine ) )
+			SCompiler.goto( self, SCompiler.GOTOZERO, whereLine, SCompiler.found( self, whereLine ) ) ## points at data section
 			return # avoids common code at bottom
 		elif comparison == ">=" :
-			SCompiler.conditionalProduction( self, whereY, whereX, TRUE ) # "or Equals"
+			SCompiler.conditionalProduction( self, whereY, whereX, orEquals )
 		elif comparison == "<=" :
-			SCompiler.conditionalProduction( self, whereX, whereY, TRUE ) # "or Equals"
+			SCompiler.conditionalProduction( self, whereX, whereY, orEquals )
 		elif comparison == ">" :
-			SCompiler.conditionalProduction( self, whereY, whereX, FALSE ) # not "or Equals"
+			SCompiler.conditionalProduction( self, whereY, whereX, not orEquals )
 		else : # must be "<"
-			SCompiler.conditionalProduction( self, whereX, whereY, FALSE ) # not "or Equals"
+			SCompiler.conditionalProduction( self, whereX, whereY, not orEquals )
 		# resolve goto
 		whereLine = SCompiler.searchForSymbol( self, restOfLine[ 4 ], SCompiler.LINE, not SCompiler.RESERVE )
-		SCompiler.goto( self, SCompiler.GOTONEG, whereLine, found( whereLine ) )
+		SCompiler.goto( self, SCompiler.GOTONEG, whereLine, SCompiler.found( self, whereLine ) )
+
+	def checkFirstTwoChars( self, varNequal ) : # tentative 12 2 8
+		if varNequal[ 0 ].isdigit( ) :
+			SCompiler.syntaxError( self, "Can't assign new values to numbers" )
+		elif varNequal[ 1 ] is not "=" :
+			SCompiler.syntaxError( self, "Expected '=' after assignment target " + varNequal[ 0 ] )
 		
-	def checkForUnexpected( self, restOfLine ) : # tentative 12 2 7
-		'realistically, I should determine the alternating nature of the expression. Later'
+	def checkForUnexpected( self, expression ) : # tentative 12 2 8
+		'realistically, I should determine the alternating nature of the expression. Later' # ( ( ( x - 5 / x ) + z ) ) - a
+		'''	ind = 0
+		lim = len( expression ) # yak shaving?
+		worked = True
+		while ind <= lim : # FSM oooh, what regex facilities does python have?
+			if expression[ ind ].isalnum( ) :
+				ind += 1
+				worked = True
+			elif expression[ ind ] is '(' or expression[ ind ] is ')' : # postfix can handle matching, if it does
+				ind += 1
+				worked = True
+			else :
+				worked = False
+				break
+			if expression[ ind ] in operators :
+				ind += 1
+				worked = True
+			else :
+				SCompiler.syntaxError( self, "Invalid symbol in expression " + ex ) # or I didn't expect it
+			'''	# I'll figure out something eventually
+		#
 		operators = [ '+', '-', '*', '/', '(', ')' ]
-		for ex in restOfLine :
+		for ex in expression :
 			if ex.isalnum( ) :
 				continue
 			elif ex in operators :
@@ -215,38 +266,46 @@ class SCompiler( object ) :
 			else :
 				SCompiler.syntaxError( self, "Invalid symbol in expression " + ex )
 
-	def mathProduction( self, whereY, operator, whereX ) : # tentative 12 2 7
+	def spotForTempAnswer( self ) : # tentative 12 2 8
+		SCompiler.prepDataLocation( self )
+		return self.dataCounter
+
+	def mathProduction( self, whereY, operator, whereX ) : # tentative 12 2 8
 		'calls Y to acc, applys operator with X to acc, stores result'
 		# Y into accumulator
 		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + whereY
-		self.instructionCounter += 1
+		SCompiler.prepInstruction( self )
 		# apply X to accumulator
 		self.smlData[ self.instructionCounter ] = operator + whereX
-		self.instructionCounter += 1
+		SCompiler.prepInstruction( self )
 		# store acc into new spot
-		self.currSym += 1
-		self.smlData[ self.instructionCounter ] = SCompiler.STORE + self.currSym
-		self.instructionCounter += 1 # for the next pass or final storage
-		return self.currSym
-		pass
+		tempLocation = SCompiler.spotForTempAnswer( self )
+		self.smlData[ self.instructionCounter ] = SCompiler.STORE + tempLocation
+		SCompiler.prepInstruction( self ) # for the next pass or final storage
+		return tempLocation # returning location because there is no symbol
 		
-	def checkDenominator( self, whereDenominator ) : # tentative 12 2 7
+	def checkDenominator( self, whereDenominator ) : # tentative 12 2 8
 		"unreliable means of checking if denominator is 0"
 		"""
-		In fact, there is no way (halting problem) that I can check at compile time
-		whether the denominator is surely 0 without evaluating the program. A const
-		denominator is safe, but any variable is initialized to 0. I would have to keep track of variables
+		In fact, there is no way (halting problem) that I can check at compile time whether
+		the denominator is surely 0 without evaluating the program. A const denominator is
+		safe, but any variable is initialized to 0. I would have to keep track of variables
 		changed in let or input statements ( & input could be zero again ) and flag any that weren't.
 		"""
 		ind = 0
 		limit = self.currSym
 		while ind <= limit :
-			if self.symbolTable[ ind ].location == whereDenominator :
-				if self.symbolTable[ ind ].type == SCompiler.CONST :
-					return # safe denominator
+			if self.symbolTable[ ind ].location is whereDenominator : # how much overlap is possible?
+				if self.symbolTable[ ind ].type is SCompiler.CONST :
+					if self.symbolTable[ ind ].symbol is not 0 :
+						return # safe denominator
+					else :
+						SCompiler.syntaxError( self, "You put a zero as a denominator" ) # unfortunately, I can't tell you which char it is from in here
 				else : # is a variable
-					# compromise
+					# compromise since it could be anything.
 					print "Warning: potential zero denominator at line %d" % self.lastLine
+					return
+			ind += 1
 
 	def evaluateCode( self, whereY, operator, whereX ) : # tentative 12 2 7
 		'produces production operations for the computation, returns location of result'
@@ -262,44 +321,44 @@ class SCompiler( object ) :
 		else :
 			pass# assert: unreachable
 
-	def evaluatePostFix( self, postfix ) : # tentative 12 2 7
+	def evaluatePostFix( self, postfix ) : # tentative 12 2 8
 		' convert polish equation to SML instructions & mem reservations '
 		tempVals = stack.Stack( )
-		index = 0
+		ind = 0 # was name conflicting with indecies below
 		y = 0
 		x = 0
 		postfix.append( ">" ) # sentinel
-		focus = postfix[ index ]
-		while ">" != focus :
+		focus = postfix[ ind ]
+		while ">" is not focus :
 			if focus.isdigit( ) :
-				where = SCompiler.searchForSymbol( self, focus, SCompiler.CONST, SCompiler.RESERVE )
+				index = SCompiler.searchForSymbol( self, focus, SCompiler.CONST, SCompiler.RESERVE )
+				where = self.symbolTable[ index ].location
 				tempVals.push( where )
 			elif focus.isalpha( ) :
-				where = SCompiler.searchForSymbol( self, focus, SCompiler.VAR, SCompiler.RESERVE )
+				index = SCompiler.searchForSymbol( self, focus, SCompiler.VAR, SCompiler.RESERVE )
+				where = self.symbolTable[ index ].location
 				tempVals.push( where )
 			else : # isOperator( )
 				x = tempVals.pop( )
 				y = tempVals.pop( )
-				whereTemp = SCompiler.evaluateCode( self, y, focus, x )
-				tempVals.push( whereTemp )
-			index += 1
-			focus = postfix[ index ]
+				tempLocation = SCompiler.evaluateCode( self, y, focus, x )
+				tempVals.push( tempLocation )
+			ind += 1
+			focus = postfix[ ind ]
 		return tempVals.pop( ) # answer location
 
-	def assignment( self, restOfLine ) : # tentative 12 2 7
-		'form of let x = ( y + 2 ) / 99 * z, so convert no matter what'
-		# store first val	# haven't I done this enough times to extract it?
-		if restOfLine[ 0 ].isdigit( ) :
-			SCompiler.syntaxError( self, "Can't assign new values to numbers" )
-		#SCompiler.checkForUnexpected( self, restOfLine[ 2: ] ) ## UNCOMMENT when I strip the last chars of the newline
-		whereFinal = SCompiler.searchForSymbol( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
+	def assignment( self, restOfLine ) : # tentative 12 2 8
+		'form of let x = ( y + 2 ) / 99 * z'
+		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # that's not consistent slicing
+		SCompiler.checkForUnexpected( self, restOfLine[ 2: ] )
+		indexFinal = SCompiler.searchForSymbol( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
 		decrypted = postFixer.convertToPostFix( restOfLine[ 2: ], False ) # cut x = ;; convert not verbosely
-		wherePenultimate = SCompiler.evaluatePostFix( self, decrypted )
+		penultimateLocation = SCompiler.evaluatePostFix( self, decrypted )
 		# penultimate into acc
-		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + wherePenultimate
-		self.instructionCounter += 1
+		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + penultimateLocation
+		SCompiler.prepInstruction( self )
 		# store into whereFinal
-		self.smlData[ self.instructionCounter ] = SCompiler.STORE + whereFinal
+		self.smlData[ self.instructionCounter ] = SCompiler.STORE + self.symbolTable[ indexFinal ].location
 			
 	def firstPass( self, line ) : # tentative 12 2 7
 		segment = line.split( ' ' )
@@ -315,15 +374,12 @@ class SCompiler( object ) :
 		self.symbolTable[ self.currSym ].type = SCompiler.LINE
 		self.symbolTable[ self.currSym ].symbol = int( lineNumber ) # in this case, the line number
 		SCompiler.validateCommandType( self, comm )
-		self.instructionCounter += 1
-		if SCompiler.programTooBig( self ) :
-			SCompiler.syntaxError( self, "Too many instructions reserved" )
-			# unfortunately, an extra remark may temporarily exceed the limit
+		SCompiler.prepInstruction( self )
 		self.symbolTable[ self.currSym ].location = self.instructionCounter
 		newInstruc = SCompiler.commandList[ comm ]
 		newInstruc( self, segment[ 2: ] ) #cut line number & command
 	
-	def resolveForwardReferencedLines( self ) : # tentative 12 2 7
+	def resolveForwardReferencedLines( self ) : # REVIEW OR FIX 12 2 8
 		'lineFlags are initialized to -1; forward references contain lineNumber (ie symbol) pointed at'
 		# WAS self.lineFlags[ self.instructionCounter ] = referencedLineNumber
 		ind = 0
@@ -334,29 +390,35 @@ class SCompiler( object ) :
 				where = SCompiler.searchForSymbol( self, self.lineFlags[ ind ], SCompiler.LINE, not SCompiler.RESERVE )
 				# resolve
 				if where < 0 :
-					SCompiler.syntaxError( self, "referenced line number at " + str( where ) + "not found" )
+					SCompiler.syntaxError( self, "referenced line number at " + str( where ) + "not found" ) # may not have worked?
 				else :
 					self.smlData[ ind ] += self.symbolTable[ where ].location # was 4100, now 41xx
 			ind += 1
 
-	def saveProgram( self ) : # tentative 12 1 24
-		output = open( "ex1.sml", 'w' )
+	def saveProgram( self, originalFileName ) : # tentative 12 2 8
+		'write to filename.sml # return that name'
+		newFileName = originalFileName[ : -4 ] + ".sml" # replaces .txt or similar
+		output = open( newFileName, 'w' )
+		output.truncate( ) # erase what's in there for safety
 		for nn in self.smlData :
 			output.write( str( nn ) + '\n' )
 		output.close( )
+		return newFileName
 
-	def secondPass( self ) : # tentative 12 2 7 
+	def secondPass( self, originalFileName ) : # tentative 12 2 8
+		'resolve goto statements, print to x.sml return that filename'
 		SCompiler.resolveForwardReferencedLines( self )
-		SCompiler.saveProgram( self )
+		return SCompiler.saveProgram( self, originalFileName )
 
-	def compile( self, simpleFile ) : # tentative 12 2 7
+	def compile( self, simpleFile ) : # tentative 12 2 8
 		simpleProgram = open( simpleFile )
 		for line in simpleProgram :
 			SCompiler.firstPass( self, line.rstrip( '\n' ) )
 		simpleProgram.close( )
 		#
-		SCompiler.secondPass( self )
+		newFile =  SCompiler.secondPass( self, simpleFile )
 		print "done"
+		return newFile
 		
 	commandList = {
 		"end" : finished,
