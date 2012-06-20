@@ -24,17 +24,17 @@ def testCpu( mem ) :
 	core = open( "core.txt", 'w' )
 	mem.coreDump( core )
 	core.close( )
-verbose = True
-#files = argv 
-#files = files[ 1: ] # discards this script's name from the list of files
-def run( files ) :
+
+def run( file ) :
 	ssd = ram.Ram( )
 	cmd = cpu.Cpu( 0, ssd, verbose )
-	ssd.loader( files )
+	ssd.loader( file )
 	#testRam( ssd )
 	#testCpu( ssd )
 	cmd.run( )
 
+verbose = True
+#run( argv[ 1 ] ) uncomment here & line 7 to test explicitly
 '''
 	Bad examples of using exec( ):
 
@@ -48,7 +48,6 @@ def run( files ) :
 >>> handle()
 
 	Good examples:
-
 >>>
 >>> d = {}
 >>> for name in sys.argv[1:]:

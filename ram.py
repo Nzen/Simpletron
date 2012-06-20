@@ -8,26 +8,21 @@ class Ram( object ):
 		self.memory = [ 0 ] * Ram.maxAddr
 	
 	def setAt( self, addr, val ):
-		' I"m expecting the client to handle addresses out of bounds '
+		' I"m expecting the client (cpu) to handle addresses out of bounds '
 		self.memory[ addr ] = val
 	
 	def getFrom( self, addr ):
-		' I"m expecting the client to handle addresses out of bounds ' # really? then why have exceed? just do it.
+		' I"m expecting the client to handle addresses out of bounds '
 		return self.memory[ addr ]
 		
 	def exceedAddrBound( self, anAddr ):
 		' is this address too big? '
-		if anAddr < 0 :
-			return True
-		elif Ram.maxAddr < anAddr :
-			return True
-		else:
-			return False
+		return anAddr < 0 or Ram.maxAddr < anAddr
 	
 	def coreDump( self, dumpSite ):	# vetted 11 12 7
 		'prints memory (only) to a file because of some error'
 		endl = 0
-		for yy in range( 0, 10 ) :
+		for yy in range( 0, 10 ) : # should reflect memory size
 			dumpSite.write( '\t' + str( yy ) )
 		for nn in self.memory:
 			if 0 == endl % 10 :
@@ -36,11 +31,11 @@ class Ram( object ):
 			endl += 1
 			
 	def loader( self, file ) :
-		" I decided it is ram's responsibility to load itself " # I'm cutting the multifile read 12 2 8
+		" I decided it is ram's responsibility to load itself "
 		memNext = 0
 		temp = 0
 		try:
-			hdSector = open( file )
+			hdSector = open( file, 'r' )
 			for line in hdSector:
 				if not line.startswith( "##" ) :
 					if Ram.exceedAddrBound( self, memNext ) :
@@ -54,5 +49,5 @@ class Ram( object ):
 				temp += 1
 			hdSector.close( )
 		except IOError:
-			print "File not found, perhaps it's not here with me"
+			print "File to load not found, perhaps it's not here with me?"
 			exit( 1 )

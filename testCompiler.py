@@ -148,11 +148,11 @@ allFunctions = (
 compiler.SCompiler.RAMSIZE = 30
 simple = compiler.SCompiler( )
 file = "monkey.txt"
-print "\tusing Deitel's %s" % file
+print "\tusing %s" % file
 #compiler.SCompiler.TESTING = True # well that's ugly; to change a class member in another module
 smlName = simple.compile( file )
 #print "validate worked? %r" % test_validateCommandType( simple )
-# it was cute the first few times to pretty by hand. I'll CUT it when I issue the final version
+## it was cute the first few times to rename smlOpcodes by hand. I'll CUT it when I issue the final version
 smlPretty.prettify( smlName )
 comp.run( smlName )
 '''

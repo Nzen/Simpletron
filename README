@@ -48,3 +48,9 @@ print - print to terminal
 goto - unconditional jump
 if - conditional jump, form of if [ expression ] goto [ line number ]
 end - stop execution
+
+RUNNING INSTRUCTIONS
+To test cpu alone, use "comp.py [filename]", however comp needs two lines uncommented
+because I've set it to run from within programmer.
+To test the compiler use "testCompiler.py". For the moment, it contains a hardcoded ref to
+monkey or similar. Later I will change it & programmer.py to use a file from argv (and ask if run)

@@ -8,13 +8,11 @@
 1103
 ##
 
-< currently does not work as intended >
-
 goto 4 if acc = 0 (it is)
 # 12
 # 13
 # space for result
-put val at 1 in acc
+put val at 1 (12) in acc
 add acc & val at 2
 store in 3
 print (from 3)
@@ -36,4 +34,3 @@ Remove stop to test multiple (sequential) processes
 	GOTONEG = 32
 	LOAD = 40
 	STORE = 41
-https://www.governmentjobs.com/js_login.cfm?&JobRequested=404663&TopHeader=anaheim&
