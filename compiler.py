@@ -4,6 +4,7 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
+
 '''
 import postFixer
 import stack
@@ -15,6 +16,10 @@ class TableEntry( object ) :
 		self.symbol = ""
 		self.type = 0 # line-0, var-1, or constVal-2
 		self.location = 0
+
+	def __str__( self ) :
+		types = { 0 : "line num", 1 : "variable", 2 : "const num" }
+		return str( self.symbol ) + "\t" + types[ self.type ] + "\t" + str( self.location )
 
 class SCompiler( object ) :
 
@@ -46,11 +51,64 @@ class SCompiler( object ) :
 		self.dataCounter = SCompiler.RAMSIZE # sc.RS - 1? 12 3 18
 		self.currSym = -1 # index in symbol table of latest
 		self.lastLine = -1 # for checkLineNumIncreasing
-		
+
+	def showSymbolTable( self ) :
+		print
+		print "\n\tContents of Symbol Table"
+		print "Current symbol index - "  + str( self.currSym )
+		print "sym\ttype\tlocation"
+		ind = 0
+		limit = self.currSym#self.symbolTable.__len__( )
+		while ( ind < limit ) :
+			print self.symbolTable[ ind ]
+			ind += 1
+
+	def showInterestingLineFlags( self ) :
+		'print the lineFlags with forward references only'
+		# self.lineFlags[ self.instructionCounter ] = int( self.symbolTable[ lineNumIndex ].symbol )
+		print
+		print "\tForward referenced lines:"
+		ind = 0
+		limit = self.lineFlags.__len__( )
+		while ind < limit :
+			lineNum = self.lineFlags[ ind ]
+			if lineNum >= 0 :
+				print "line called " + str( lineNum ) + " referenced by instruction in mem " + str( ind )
+			ind += 1
+
+	def showMem( self ) :
+		print
+		print "Instr count - " + str( self.instructionCounter ) + "\tData counter - " + str( self.dataCounter )
+		print "\tContents of sml data bank"
+		ind = 0
+		vert = 0
+		#off = 0
+		maxVert = 5
+		lim = self.smlData.__len__( )
+		for yy in range( 0, 5 ) : # should reflect memory size
+			print '\t' + str( yy ),
+		print
+		print '\t',
+		while ind < lim :
+			if vert >= maxVert :
+				vert = 0
+				print
+				print ( str( ind ) + '\t' ),
+			print ( str( self.smlData[ ind ] ).rjust( 4, '0' ) + '\t' ),
+			ind += 1
+			vert += 1
+			#off += 5
+	
+	def showState( self ) :
+		SCompiler.showSymbolTable( self )
+		SCompiler.showInterestingLineFlags( self )
+		SCompiler.showMem( self )
+
 	def syntaxError( self, why ) : # tentative 12 2 7
 		if self.lastLine < 0 :
 			self.lastLine = 0 # for human clarity
-		print "%s in line %d" % ( why, self.lastLine )
+		print "XX > %s in line %d" % ( why, self.lastLine )
+		SCompiler.showState( self )
 		if SCompiler.TESTING :
 			SCompiler.FAILED = True
 		else :
@@ -159,9 +217,6 @@ class SCompiler( object ) :
 		whereInd = SCompiler.saveNonLine( self, restOfLine[ 0 ] )
 		self.smlData[ self.instructionCounter ] = SCompiler.WRITE + self.symbolTable[ whereInd ].location
 
-	def found( self, index ) :  # ok 12 2 8
-		return index >= 0
-
 	def goto( self, opType, lineNumIndex, lineNumDefined ) : # tentative 12 2 8
 		'the logic was backwards here'
 		if lineNumDefined :
@@ -172,6 +227,10 @@ class SCompiler( object ) :
 			# write tentative goto
 			self.smlData[ self.instructionCounter ] = opType # points at 3X00
 
+	def symbFound( self, index ) :  # ok 12 2 8
+		'ie a line number is in this index of lineFlags'
+		return index >= 0
+
 	def branch( self, restOfLine ) : # FIX 12 2 8
 		"#1 goto #2"
 		if not restOfLine[ 0 ].isdigit( ) :	# POINTS AT Index or resolving is failing
@@ -179,7 +238,7 @@ class SCompiler( object ) :
 			restOfLine[ 0 ] + ", only to integer line numbers" )
 		# search symbolTable for the referenced line number
 		whereIndex = SCompiler.searchForSymbol( self, restOfLine[ 0 ], SCompiler.LINE, not SCompiler.RESERVE )
-		SCompiler.goto( self, SCompiler.GOTO, whereIndex, SCompiler.found( self, whereIndex ) )
+		SCompiler.goto( self, SCompiler.GOTO, whereIndex, SCompiler.symbFound( self, whereIndex ) )
 
 	def simulateOrEquals( self ) : # tentative 12 2 8
 		'subtract one more to push an equals to neg'
@@ -232,7 +291,7 @@ class SCompiler( object ) :
 			SCompiler.conditionalProduction( self, whereX, whereY, not orEquals )
 		# resolve goto
 		whereLine = SCompiler.searchForSymbol( self, restOfLine[ 4 ], SCompiler.LINE, not SCompiler.RESERVE )
-		SCompiler.goto( self, SCompiler.GOTONEG, whereLine, SCompiler.found( self, whereLine ) )
+		SCompiler.goto( self, SCompiler.GOTONEG, whereLine, SCompiler.symbFound( self, whereLine ) )
 	
 	def conditional( self, restOfLine ) : # FIX 12 2 8
 		"# if x > y goto #2"
@@ -244,7 +303,7 @@ class SCompiler( object ) :
 		if comparison == "==" :
 			SCompiler.conditionalProduction( self, whereX, whereY, False ) # not orEquals
 			whereLine = SCompiler.searchForSymbol( self, restOfLine[ 4 ], SCompiler.LINE, not SCompiler.RESERVE )
-			SCompiler.goto( self, SCompiler.GOTOZERO, whereLine, SCompiler.found( self, whereLine ) ) ## points at data section
+			SCompiler.goto( self, SCompiler.GOTOZERO, whereLine, SCompiler.symbFound( self, whereLine ) ) ## points at data section
 		else :
 			SCompiler.relationConditional( self, whereX, whereY, restOfLine[ 4 ] )
 
@@ -400,10 +459,11 @@ class SCompiler( object ) :
 		self.symbolTable[ whereLine ].location = self.instructionCounter
 		newInstruc = SCompiler.commandList[ comm ] # string of the function name
 		newInstruc( self, segment[ 2: ] ) # cut line number & command, send restOfLine
-	
+
 	def resolveForwardReferencedLines( self ) : # REVIEW OR FIX 12 2 8
 		'lineFlags are initialized to -1; forward references contain lineNumber (ie symbol) pointed at'
 		# Resolves self.lineFlags[ self.instructionCounter ] = int( self.symbolTable[ lineNumIndex ].symbol )
+		##SCompiler.showInterestingLineFlags( self )
 		ind = 0
 		limit = SCompiler.RAMSIZE # limit of lineFlags array // shouldn't the limit be instructionCounter? I don't want to change vars
 		while ind < limit :
@@ -412,7 +472,7 @@ class SCompiler( object ) :
 				# find that line number in symbolTable
 				whereInd = SCompiler.searchForSymbol( self, lineNum, SCompiler.LINE, not SCompiler.RESERVE )
 				# resolve
-				if not SCompiler.found( self, whereInd ) :
+				if not SCompiler.symbFound( self, whereInd ) :
 					SCompiler.syntaxError( self, "referenced line number at " + str( lineNum ) + " not found" )
 				else :
 					self.smlData[ ind ] += self.symbolTable[ whereInd ].location # was 4100, now 41xx
@@ -448,6 +508,7 @@ class SCompiler( object ) :
 		simpleProgram = open( simpleFile )
 		for line in simpleProgram :
 			SCompiler.firstPass( self, line.rstrip( '\n' ) )
+			#print ". Line complete"
 		simpleProgram.close( )
 		#
 		newFile =  SCompiler.secondPass( self, simpleFile )
