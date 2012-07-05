@@ -49,7 +49,7 @@ class Cpu( object ):
 			self.opCode = self.ir / Cpu.halfWord # separate high order
 			self.opAddr = self.ir % Cpu.halfWord # separate low order
 			if self.mem.exceedAddrBound( self.opAddr ) :
-				fail_coreDump( "Address out of range" )
+				Cpu.fail_coreDump( "Address out of range" )
 			else:
 				self.opVal = self.mem.getFrom( self.opAddr )
 				# this is a convenience, it may not be used if cpu writes to that location, or a goto
@@ -127,7 +127,7 @@ class Cpu( object ):
 	def setPC( self, addr ):
 		' for the goto commands '
 		if self.mem.exceedAddrBound( addr ) :
-				fail_coreDump( "Address out of range" )
+				Cpu.fail_coreDump( "Address out of range" )
 		else:
 			self.pc = addr
 	
@@ -140,7 +140,7 @@ class Cpu( object ):
 		dump.write( 'Program counter: ' + str( self.pc ) + '\t'  )
 		dump.write( 'Instruction register: ' + str( self.ir ) + '\t'  )
 		dump.write( 'Accumulator: ' + str( self.acc ) + '\n\n\n'  )
-		self.mem.fail_coreDump( dump )
+		self.mem.coreDump( dump )
 		dump.close( )
 		self.running = False
 		

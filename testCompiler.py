@@ -53,16 +53,16 @@ def test_searchForSymbol( compiler ) : # review 12 2 8
 	
 	# set up environ
 	compiler.symbolTable[ 0 ].symbol = "dummy"
-	compiler.symbolTable[ 0 ].type = tool.VAR
+	compiler.symbolTable[ 0 ].type = compiler.VAR
 	compiler.symbolTable[ 1 ].symbol = 5
-	compiler.symbolTable[ 1 ].type = tool.LINE
+	compiler.symbolTable[ 1 ].type = compiler.LINE
 	compiler.symbolTable[ 2 ].symbol = 5
-	compiler.symbolTable[ 2 ].type = tool.CONST
+	compiler.symbolTable[ 2 ].type = compiler.CONST
 	compiler.currSymb = 2
 	
 	# test
-	result1 = compiler.searchForSymbol( "fail", tool.LINE )
-	result2 = compiler.searchForSymbol( 5, tool.CONST )
+	result1 = compiler.searchForSymbol( "fail", compiler.LINE )
+	result2 = compiler.searchForSymbol( 5, compiler.CONST )
 	
 	# reset to state
 	compiler.currSymb = cS
@@ -126,8 +126,6 @@ def test_assignment( compiler ) : # unready 12 2 8
 	'create assignment from expression'
 	return False
 
-tool = compiler.SCompiler( )
-
 allFunctions = (
 	test_reserveNewSymbol,
 	test_comment,
@@ -154,6 +152,7 @@ smlName = simple.compile( file )
 #print "validate worked? %r" % test_validateCommandType( simple )
 ## it was cute the first few times to rename smlOpcodes by hand. I'll CUT it when I issue the final version
 smlPretty.prettify( smlName )
+raw_input( "paused so you can fix monkey.sml" ) # CUT when it doesn't 
 comp.run( smlName )
 '''
 # Oh yeah, that's what I'm talking about
