@@ -1,14 +1,14 @@
-3011
+4011
 00
 01
 1009
-4009
-2110
-4109
+2009
+3110
+2109
 1109
-3118
-3012
-00
+4118
+4012
+4300
 ##
 (testing multiple files)
 	Shit, multiple files requires OS help because all these
@@ -29,15 +29,15 @@ goto 1 if zero
 goto 6 (subtract) since the other one failed
 stop
 
-	STOP = 0
-	READ = 10
-	WRITE = 11
-	ADD = 20
-	SUBTR = 21
-	MULTP = 22
-	DIVIDE = 23
-	GOTO = 30
-	GOTOZERO = 31
-	GOTONEG = 32
-	LOAD = 40
-	STORE = 41
+	STOP = 0 # 43
+	READ = 10 # same
+	WRITE = 11 # same
+	ADD_I = 20 # 30
+	SUB_I = 21 # 31
+	MUL_I = 22 # 33
+	DIV_I = 23 # 32
+	GOTO = 30 # 40
+	GO_ZERO = 31 # 42
+	GO_NEG = 32 # 41
+	LOAD = 40 # 20
+	STORE = 41 # 21

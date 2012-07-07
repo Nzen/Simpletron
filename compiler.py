@@ -3,86 +3,8 @@
 # begun 12 1 11
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
-'''	OUTPUT
-        using monkey.txt
-
-        Forward referenced lines:
-line called 9 referenced by instruction in mem 3
-line called 10 referenced by instruction in mem 6
-
-        Contents of Symbol Table        index - 15
-sym     type    location
-1       line num        0
-2       line num        0
-3       line num        0
-5       const num       29
-6       line num        1
-x       variable        28
-7       line num        2
-9       line num        4
-3       const num       27
-1       const num       26
-10      line num        7
-5       const num       25
-11      line num        9
-y       variable        24
-6       const num       23
-53      line num        14
-
-Instr count - 14        Data counter - 22
-        Contents of sml data bank
-        0       1       2       3       4
-        1129    1028    0000    3000    4027
-5       2126    3100    4025    4128    4023
-10      2025    4122    4022    4124    0000
-15      0000    0000    0000    0000    0000
-20      0000    0000    0000    0006    0000
-25      0005    0001    0003    0000    0005    done
-paused so you can fix monkey.sml so it looks at 3 instead of 2d
-	[simpletron output]
- print to terminal:  5
- wait for terminal input
- -- 4
- print... // changed this during pause, used to be "0"
- naive goto ptr to 4
- load Acc with 3 from 27
- subtract (acc) 3 and 1
- if Acc (2) is zero, goto 7
- load Acc with 5 from 25
- save acc, 5, into 28
- load Acc with 6 from 23
- add (acc) 6 and 5
- save acc, 11, into 22
- load Acc with 11 from 22
- save acc, 11, into 24
-Halt program
-
-	[monkey prettified]
-0 print from 29
-1 input to 28
-2 ..0
-3 goto 4
-4 load acc from 27
-5 - - acc & from 26
-6 if acc Negative goto 7
-7 load acc from 25
-8 store acc into 28
-9 load acc from 23
-10 ++ acc & from 25
-11 store acc into 22
-12 load acc from 22
-13 store acc into 24
-
-	[monkey in simple]
-1 rem monkey wrench program, not designed to be run on simpletron
-2 rem
-3 print 5
-6 input x
-7 goto 9
-9 if 3 == 1 goto 10
-10 let x = 5
-11 let y = 6 + 5
-53 end
+'''
+	todays notes
 '''
 
 import postFixer
@@ -96,27 +18,39 @@ class TableEntry( object ) :
 		self.location = 0
 
 	def __str__( self ) :
-		types = { 0 : "line num", 1 : "variable", 2 : "const num" }
+		types = {
+			0 : "line num",
+			1  : "variable",
+			2 : "const num",
+			3 : "array",
+			4 : "function",
+			5 : "phrase"
+			} # key literals because cpu.line, et al, not yet defined
 		return str( self.symbol ) + "\t" + types[ self.type ] + "\t" + str( self.location )
 
 class SCompiler( object ) :
 
-	STOP = 0000 # Deitel has a different number. Warford & present technique ensure bad accesses halt the program
-	READ = 1000
+	READ  = 1000
 	WRITE = 1100
-	ADD = 2000
-	SUBTR = 2100
-	MULTP = 2200
-	DIVIDE = 2300
-	GOTO = 3000
-	GOTOZERO = 3100
-	GOTONEG = 3200
-	LOAD = 4000
-	STORE = 4100
-	RAMSIZE = 100
+	LOAD  = 2000
+	STORE = 2100
+	ADD_I = 3000
+	SUB_I = 3100
+	MUL_I = 3200
+	DIV_I = 3300
+	MOD_I = 3400
+	GOTO  = 4000
+	GO_ZERO = 4100
+	GO_NEG = 4200
+	STOP  = 4300 # Matches spec, but cpu thinks 0 also is stop, as per Warford
+	RAMSIZE = 100 # so bad accesses halt safely rather than fail_coreDump()
+	#
 	LINE = 0
 	VAR = 1
 	CONST = 2
+	ARRAY = 3
+	FUNCT = 4
+	PHRAS = 5
 	RESERVE = True
 	TESTING = False
 	FAILED = False # for testing when syntaxError shouldn't exit( )
@@ -138,6 +72,7 @@ class SCompiler( object ) :
 		limit = self.currSym #self.symbolTable.__len__( )
 		while ( ind <= limit ) :
 			print self.symbolTable[ ind ]
+			ind += 1
 
 	def showInterestingLineFlags( self ) :
 		'print the lineFlags with forward references only'
@@ -209,8 +144,6 @@ class SCompiler( object ) :
 
 	def prepInstruction( self ) :
 		'starting from 0, reserves spot, checks if instructions & data collide'
-		#if self.instructionCounter > 1 :
-		#	SCompiler.showSymbolTable( self )
 		self.instructionCounter += 1
 		# unfortunately, an extra remark may temporarily exceed the limit, oh well.
 		if SCompiler.programTooBig( self ) :
@@ -298,15 +231,14 @@ class SCompiler( object ) :
 		whereInd = SCompiler.saveNonLine( self, restOfLine[ 0 ] )
 		self.smlData[ self.instructionCounter ] = SCompiler.WRITE + self.symbolTable[ whereInd ].location
 
-	def goto( self, opType, lineNumIndex, lineNumDefined, numIfX ) :
+	def goto( self, opType, lineNumIndex, lineNumDefined, numIfNot ) :
 		'emit goto in smlData or do naive to 0 & flag for resolution on second pass'
-		SCompiler.prepInstruction( self ) # conditionals seem to prep themselves
 		if lineNumDefined :
 			self.smlData[ self.instructionCounter ] = opType + self.symbolTable[ lineNumIndex ].location
 		else :
 			# flag for later substitution
-			self.lineFlags[ self.instructionCounter ] = int( numIfX ) # can't look in sTab, not reserved
-			# write tentative goto
+			self.lineFlags[ self.instructionCounter ] = int( numIfNot ) # can't look in sTab, not reserved
+			# write a tentative goto
 			self.smlData[ self.instructionCounter ] = opType # points at 3X00
 
 	def symbFound( self, index ) :
@@ -316,9 +248,8 @@ class SCompiler( object ) :
 	def branch( self, restOfLine ) :
 		"#1 goto #2"
 		lineTarget = restOfLine[ 0 ]
-		if not lineTarget.isdigit( ) :	# POINTS AT Index or resolving is failing
+		if not lineTarget.isdigit( ) :
 			SCompiler.syntaxError( self, "can't jump to variable " + lineTarget + ", only to int line numbers" )
-		# search symbolTable for the referenced line number
 		whereIndex = SCompiler.getSymbolIndex( self, lineTarget, SCompiler.LINE, not SCompiler.RESERVE )
 		SCompiler.goto( self, SCompiler.GOTO, whereIndex, SCompiler.symbFound( self, whereIndex ), lineTarget )
 
@@ -327,17 +258,17 @@ class SCompiler( object ) :
 		# given x>y, y-x < 0; if I want x>=y then y-x may = 0
 		indOfOne = SCompiler.getSymbolIndex( self, 1, SCompiler.CONST, SCompiler.RESERVE )
 		SCompiler.prepInstruction( self )
-		self.smlData[ self.instructionCounter ] = SCompiler.SUBTR + self.symbolTable[ indOfOne ].location
+		self.smlData[ self.instructionCounter ] = SCompiler.SUB_I + self.symbolTable[ indOfOne ].location
 
 	def conditionalProduction( self, firstInd, secondInd, orEqual ) :
-			'loads first, subtracts second; IF orEqualTo subtracts one more, so gotoNeg works'
-			# save: load first to acc
-			self.smlData[ self.instructionCounter ] = SCompiler.LOAD + self.symbolTable[ firstInd ].location
-			# save: subtract second from first
-			SCompiler.prepInstruction( self )
-			self.smlData[ self.instructionCounter ] = SCompiler.SUBTR + self.symbolTable[ secondInd ].location
-			if orEqual :
-				SCompiler.simulateOrEquals( self )
+		'loads first, subtracts second; IF orEqualTo subtracts one more, so GO_NEG works'
+		# save: load first to acc
+		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + self.symbolTable[ firstInd ].location
+		# save: subtract second from first
+		SCompiler.prepInstruction( self )
+		self.smlData[ self.instructionCounter ] = SCompiler.SUB_I + self.symbolTable[ secondInd ].location
+		if orEqual :
+			SCompiler.simulateOrEquals( self )
 
 	def validateIfgotoExpression( self, expression ) :
 		'x > y goto #'
@@ -361,10 +292,10 @@ class SCompiler( object ) :
 			return # I just like completing the elif field
 
 	def relationConditional( self, whereX, whereY, comparison, lineNumSymb ) :
-		'uses gotoNeg rather than zero; comparison fsm ensures sensible subtractions' # what the hell?
+		'uses GO_NEG rather than zero; comparison fsm ensures sensible subtractions'
 		orEquals = True
 		if comparison == ">=" :
-			SCompiler.conditionalProduction( self, whereY, whereX, orEquals ) # so many uninitialized?
+			SCompiler.conditionalProduction( self, whereY, whereX, orEquals )
 		elif comparison == "<=" :
 			SCompiler.conditionalProduction( self, whereX, whereY, orEquals )
 		elif comparison == ">" :
@@ -372,21 +303,26 @@ class SCompiler( object ) :
 		else : # must be "<"
 			SCompiler.conditionalProduction( self, whereX, whereY, not orEquals )
 		# resolve goto
-		whereLine = SCompiler.getSymbolIndex( self, restOfLine[ 4 ], SCompiler.LINE, not SCompiler.RESERVE )
-		SCompiler.goto( self, SCompiler.GOTONEG, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
+		whereLine = SCompiler.getSymbolIndex( self, lineNumSymb, SCompiler.LINE, not SCompiler.RESERVE )
+		SCompiler.prepInstruction( self )
+		SCompiler.goto( self, SCompiler.GO_NEG, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
+	
+	def equalityConditional( self, whereX, whereY, comparison, lineNumSymb ) :
+		SCompiler.conditionalProduction( self, whereX, whereY, False ) # not orEquals
+		whereLine = SCompiler.getSymbolIndex( self, lineNumSymb, SCompiler.LINE, not SCompiler.RESERVE )
+		SCompiler.prepInstruction( self )
+		SCompiler.goto( self, SCompiler.GO_ZERO, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
 	
 	def conditional( self, restOfLine ) :
 		"# if x > y goto #2"
 		SCompiler.validateIfgotoExpression( self, restOfLine )
 		whereX = SCompiler.saveNonLine( self, restOfLine[ 0 ] )
 		comparison = restOfLine[ 1 ]
-		target = restOfLine[ 4 ]
 		whereY = SCompiler.saveNonLine( self, restOfLine[ 2 ] )
+		target = restOfLine[ 4 ]
 		# resolve conditional expression
 		if comparison == "==" :
-			SCompiler.conditionalProduction( self, whereX, whereY, False ) # not orEquals
-			whereLine = SCompiler.getSymbolIndex( self, target, SCompiler.LINE, not SCompiler.RESERVE )
-			SCompiler.goto( self, SCompiler.GOTOZERO, whereLine, SCompiler.symbFound( self, whereLine ), target )
+			SCompiler.equalityConditional( self, whereX, whereY, comparison, target )
 		else :
 			SCompiler.relationConditional( self, whereX, whereY, comparison, target )
 
@@ -472,15 +408,18 @@ class SCompiler( object ) :
 
 	def evaluateCode( self, whereY, operator, whereX ) :
 		'produces production operations for the computation, returns location of result'
-		if '+' is operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.ADD, whereX )
-		elif '-' is operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.SUBTR, whereX )
-		elif '*' is operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.MULTP, whereX )
-		elif '/' is operator :
+		# Deitel suggests only using the full production at the end
+		if '+' == operator :
+			return SCompiler.mathProduction( self, whereY, SCompiler.ADD_I, whereX )
+		elif '-' == operator :
+			return SCompiler.mathProduction( self, whereY, SCompiler.SUB_I, whereX )
+		elif '*' == operator :
+			return SCompiler.mathProduction( self, whereY, SCompiler.MUL_I, whereX )
+		elif '/' == operator :
 			SCompiler.checkDenominator( self, whereX )
-			return SCompiler.mathProduction( self, whereY, SCompiler.DIVIDE, whereX )
+			return SCompiler.mathProduction( self, whereY, SCompiler.DIV_I, whereX )
+		elif '%' == operator :
+			return SCompiler.mathProduction( self, whereY, SCompiler.MOD_I, whereX )
 		else :
 			pass# assert: unreachable
 
@@ -495,12 +434,12 @@ class SCompiler( object ) :
 		while ">" is not focus :
 			if focus.isdigit( ) :
 				symIndex = SCompiler.getSymbolIndex( self, focus, SCompiler.CONST, SCompiler.RESERVE )
-				where = self.symbolTable[ symIndex ].location
-				tempVals.push( where )
+				whereMem = self.symbolTable[ symIndex ].location
+				tempVals.push( whereMem )
 			elif focus.isalpha( ) :
 				symIndex = SCompiler.getSymbolIndex( self, focus, SCompiler.VAR, SCompiler.RESERVE )
-				where = self.symbolTable[ symIndex ].location
-				tempVals.push( where )
+				whereMem = self.symbolTable[ symIndex ].location
+				tempVals.push( whereMem )
 			else : # isOperator( )
 				x = tempVals.pop( )
 				y = tempVals.pop( )
@@ -515,7 +454,7 @@ class SCompiler( object ) :
 		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # that's not consistent slicing syntax, Guido
 		SCompiler.checkForUnexpected( self, restOfLine[ 2: ] )
 		indexFinal = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
-		decrypted = postFixer.convertToPostFix( restOfLine[ 2: ], False ) # cut x = ;; convert not verbosely
+		decrypted = postFixer.convertToPostFix( restOfLine[ 2: ], False ) # cut x = ; convert the rest via shunting yard
 		penultimateLocation = SCompiler.evaluatePostFix( self, decrypted ) # mixing locations & symTab indexes is weird
 		# penultimate into acc
 		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + penultimateLocation ## should I make this sort of assignment OO style?
@@ -577,16 +516,6 @@ class SCompiler( object ) :
 			output.write( str( nn ) + '\n' ) # consider using same technique as Ram.coreDump
 		output.close( )
 		return newFileName
-		'''	coreDump( )
-		endl = 0
-		for yy in range( 0, 10 ) : # should reflect memory size, say ramSize / 10
-			dumpSite.write( '\t' + str( yy ) )
-		for nn in self.memory:
-			if 0 == endl % 10 :
-				dumpSite.write( '\n' + str( endl ) + '\t' ) # 00xx
-			dumpSite.write( str( nn ).rjust( 4, '0' ) + '\t' ) # doesn't need to be \n\r
-			endl += 1
-		'''
 
 	def secondPass( self, originalFileName ) :
 		'resolve goto statements, print to x.sml return that filename'
@@ -614,3 +543,85 @@ class SCompiler( object ) :
 		"input" : userInput,
 		"print" : screenOutput,
 		}
+
+'''	OUTPUT
+        using monkey.txt
+
+        Forward referenced lines:
+line called 9 referenced by instruction in mem 3
+line called 10 referenced by instruction in mem 6
+
+        Contents of Symbol Table        index - 15
+ sym     type    location
+ 1       line num        0
+ 2       line num        0
+ 3       line num        0
+ 5       const num       29
+ 6       line num        1
+ x       variable        28
+ 7       line num        2
+ 9       line num        4
+ 3       const num       27
+ 1       const num       26
+ 10      line num        7
+ 5       const num       25
+ 11      line num        9
+ y       variable        24
+ 6       const num       23
+ 53      line num        14
+
+Instr count - 14        Data counter - 22
+        Contents of sml data bank
+        0       1       2       3       4
+        1129    1028    0000    3000    4027
+5       2126    3100    4025    4128    4023
+10      2025    4122    4022    4124    0000
+15      0000    0000    0000    0000    0000
+20      0000    0000    0000    0006    0000
+25      0005    0001    0003    0000    0005    done
+paused so you can fix monkey.sml so it looks at 3 instead of 2d
+	[simpletron output]
+ print to terminal:  5
+ wait for terminal input
+ -- 4
+ print... // changed this during pause, used to be "0"
+ naive goto ptr to 4
+ load Acc with 3 from 27
+ subtract (acc) 3 and 1
+ if Acc (2) is zero, goto 7
+ load Acc with 5 from 25
+ save acc, 5, into 28
+ load Acc with 6 from 23
+ add (acc) 6 and 5
+ save acc, 11, into 22
+ load Acc with 11 from 22
+ save acc, 11, into 24
+ Halt program
+
+[monkey prettified]
+ 0 print from 29
+ 1 input to 28
+ 2 ..0
+ 3 goto 4
+ 4 load acc from 27
+ 5 - - acc & from 26
+ 6 if acc Negative goto 7
+ 7 load acc from 25
+ 8 store acc into 28
+ 9 load acc from 23
+ 10 ++ acc & from 25
+ 11 store acc into 22
+ 12 load acc from 22
+ 13 store acc into 24
+
+[monkey in simple]
+ 1 rem monkey wrench program, not designed to be run on simpletron
+ 2 rem
+ 3 print 5
+ 6 input x
+ 7 goto 9
+ 9 if 3 == 1 goto 10
+ 10 let x = 5
+ 11 let y = 6 + 5
+ 53 end
+'''

@@ -1,6 +1,6 @@
 
 # Nicholas Prado
-# a virtual machine, initially adhering to Deitel's Simpletron spec
+# a virtual machine, largely adhering to Deitel's Simpletron spec
 
 import cpu
 import ram
@@ -34,10 +34,9 @@ def run( file ) :
 	cmd.run( )
 
 verbose = True
-#run( argv[ 1 ] ) uncomment here & line 7 to test explicitly
+#run( argv[ 1 ] ) # uncomment here & line 7 to test explicitly
 '''
 	Bad examples of using exec( ):
-
 >>>
 >>> for name in sys.argv[1:]:
 >>>     exec "%s=1" % name

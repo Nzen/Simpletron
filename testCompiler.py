@@ -3,8 +3,9 @@
 # Might as well practice testing
 
 import compiler
-import smlPretty
+import smlDisassemb
 import comp
+from sys import argv
 
 def test_syntaxError( compiler ) : # unready 12 2 8
 	'handle syntax error'
@@ -72,15 +73,6 @@ def test_searchForSymbol( compiler ) : # review 12 2 8
 	
 	# publish
 	return result1 == -1 and result2 == 2
-	'''
-	symbolTable
-	self.lineFlags
-	self.smlData
-	self.instructionCounter
-	self.dataCounter
-	self.currSym
-	self.lastLine
-	'''
 
 def test_programTooBig( compiler ) : # review 12 2 8
 	'program data overlap'
@@ -94,67 +86,22 @@ def test_programTooBig( compiler ) : # review 12 2 8
 	compiler.instructionCounter = iC
 	return result
 
-def test_reserveNewSymbol( compiler ) : # unready 12 2 8
-	'reserve new symbol'
-	return False
-
-def test_comment( compiler ) : # unready 12 2 8
-	'handle comment'
-	return False
-
-def test_finished( compiler ) : # unready 12 2 8
-	'create halt instruction'
-	return False
-
-def test_userInput( compiler ) : # unready 12 2 8
-	'create i/o wait flag'
-	return False
-
-def test_screenOutput( compiler ) : # unready 12 2 8
-	'create printout'
-	return False
-
-def test_branch( compiler ) : # unready 12 2 8
-	'create naive jump'
-	return False
-
-def test_conditional( compiler ) : # unready 12 2 8
-	'create conditional jump'
-	return False
-
-def test_assignment( compiler ) : # unready 12 2 8
-	'create assignment from expression'
-	return False
-
-allFunctions = (
-	test_reserveNewSymbol,
-	test_comment,
-	test_finished,
-	test_userInput,
-	test_screenOutput,
-	test_branch,
-	test_conditional,
-	test_assignment,
-	test_screenOutput,
-	test_branch,
-	test_programTooBig,
-	test_searchForSymbol,
-	test_validateCommandType,
-	test_syntaxError
-	)
-
 compiler.SCompiler.RAMSIZE = 30
 simple = compiler.SCompiler( )
-file = "monkey.txt"
+file = argv[ 1 ]
 print "\tusing %s" % file
 #compiler.SCompiler.TESTING = True # well that's ugly; to change a class member in another module
 smlName = simple.compile( file )
 #print "validate worked? %r" % test_validateCommandType( simple )
 ## it was cute the first few times to rename smlOpcodes by hand. I'll CUT it when I issue the final version
-smlPretty.prettify( smlName )
-raw_input( "paused so you can fix monkey.sml" ) # CUT when it doesn't 
-comp.run( smlName )
+smlDisassemb.explainSml( smlName )
+run = raw_input( "Run sml file? y/n -- " )
+if run.find( "y" ) >= 0 or run.find( "Y" ) >= 0 : # I know, extremely simplistic.
+	comp.run( smlName )
+else :
+	print smlName + " ready"
 '''
+
 # Oh yeah, that's what I'm talking about
 for test in allFunctions :
 	if not test( tool ) :

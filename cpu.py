@@ -1,28 +1,30 @@
 
 # Nicholas Prado
-# a virtual machine, initially adhering to Deitel's Simpletron spec
+# a virtual machine, largely adhering to Deitel's Simpletron spec
 
 import ram
 
-class Cpu( object ):
+class Cpu( object ) :
 
 	word = 1000
-	negWordLim = -1000
 	halfWord = 100 # word / 10, so mod & divide separate hi/lo order correctly
-	STOP = 0
+	posWordLim = 9999
+	negWordLim = -9999
 	READ = 10
 	WRITE = 11
-	ADD = 20
-	SUBTR = 21
-	MULTP = 22
-	DIVIDE = 23
-	GOTO = 30
-	GOTOZERO = 31
-	GOTONEG = 32
-	LOAD = 40
-	STORE = 41
-		
-	def __init__( self, startPC, ramPtr, outputStatements ) :
+	LOAD = 20
+	STORE = 21
+	ADD = 30
+	SUB = 31
+	DIV = 32
+	MUL = 33
+	MOD = 34
+	GOTO = 40
+	GO_NEG = 41
+	GO_ZERO = 42
+	STOP = 43
+
+	def __init__( self, startPC, ramPtr, outputDesirablility ) :
 		self.running = True
 		self.pc = startPC # program counter
 		self.acc = 0 # accumulator
@@ -31,107 +33,141 @@ class Cpu( object ):
 		self.opAddr = 0 # address pointed to in IR
 		self.opVal = 0 # value retrieved from opAddr
 		self.mem = ramPtr
-		self.verbose = outputStatements
+		self.verbose = outputDesirablility
+		self.opVerbs = {
+			Cpu.STOP : "Halt program",
+			Cpu.READ : " wait for terminal input",
+			Cpu.WRITE : " print to terminal: ",
+			Cpu.ADD : " add (acc) " + str( self.acc ) + " and " + str( self.opVal ),
+			Cpu.SUB : " subtract (acc) " + str( self.acc ) + " from " + str( self.opVal ),
+			Cpu.MUL : " multiply (acc) " + str( self.acc ) + " and " + str( self.opVal ),
+			Cpu.DIV : " divide (acc) " + str( self.acc ) + " by " + str( self.opVal ),
+			Cpu.MOD : " modulus (acc )" + str( self.acc ) + " by " + str( self.opVal ),
+			Cpu.GOTO : " naive goto ptr to " + str( self.opAddr ),
+			Cpu.GO_ZERO : " if Acc (%d) is zero, goto " + str( self.opAddr ),
+			Cpu.GO_NEG : " if Acc (" + str( self.acc ) + ") is neg, goto " + str( self.opAddr ),
+			Cpu.LOAD : " load Acc with " + str( self.opVal ) + " from " + str( self.opAddr ),
+			Cpu.STORE : " save Acc (" + str( self.acc ) + ") into " + str( self.opAddr )
+			}
 		
 	def checkOverflow( self ):
 		' if exceeds wordsize, either positively or negatively '
-		if Cpu.word < self.acc :
+		if Cpu.posWordLim < self.acc :
 			Cpu.fail_coreDump( self, "Accumulator overflow" )
 		elif Cpu.negWordLim > self.acc:
 			Cpu.fail_coreDump( self, "Accumulator underflow" )
 	
+	def fillRegisters( self ) :
+		self.ir = self.mem.getFrom( self.pc )
+		self.opCode = self.ir / Cpu.halfWord # separate high order
+		self.opAddr = self.ir % Cpu.halfWord # separate low order
+		if self.mem.exceedAddrBound( self.opAddr ) :
+			Cpu.fail_coreDump( "Address " + str( self.opAddr ) + " out of range" )
+		else:
+			self.opVal = self.mem.getFrom( self.opAddr )
+			# this is a convenience, it may not be used if cpu writes to that location, or a goto
+			self.pc += 1
+	
 	def fetch( self ): # vetted 11 12 7
 		' get next, get indirected value '
 		if self.mem.exceedAddrBound( self.pc ) :
-			Cpu.fail_coreDump( self, "Address out of range" )
+			Cpu.fail_coreDump( self, "Address " + str( self.pc ) + " out of range" )
 		else :
-			self.ir = self.mem.getFrom( self.pc )
-			self.opCode = self.ir / Cpu.halfWord # separate high order
-			self.opAddr = self.ir % Cpu.halfWord # separate low order
-			if self.mem.exceedAddrBound( self.opAddr ) :
-				Cpu.fail_coreDump( "Address out of range" )
-			else:
-				self.opVal = self.mem.getFrom( self.opAddr )
-				# this is a convenience, it may not be used if cpu writes to that location, or a goto
-				self.pc += 1
+			Cpu.fillRegisters( self )
 	
-	# each may be trivial, but extract for dict function magic
-	def execute( self ):
-		' elif field of the ISA '
-		if Cpu.STOP == self.opCode:
-			self.running = False
-			if self.verbose :
-				print "Halt program"
-		elif Cpu.READ == self.opCode:
-			if self.verbose :
-				print " wait for terminal input"
+	def halt( self ) :
+		self.running = False
+	
+	def i_O( self, type, explanation ) :
+		if self.verbose :
+			print explanation,
+		if type == Cpu.READ :
 			self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
-		elif Cpu.WRITE == self.opCode: # to the terminal, am I assuming only ints here? perhaps separate int & char
-			if self.verbose :
-				print " print to terminal: ",
+		else : # type == Cpu.WRITE
 			print self.opVal
-		elif Cpu.ADD == self.opCode:
-			if self.verbose :
-				print " add (acc) %s and %d" % ( self.acc, self.opVal )
-			self.acc += self.opVal
-			Cpu.checkOverflow( self )
-		elif Cpu.SUBTR == self.opCode:
-			if self.verbose :
-				print " subtract (acc) %s and %d" % ( self.acc, self.opVal )
-			self.acc -= self.opVal
-			Cpu.checkOverflow( self )
-		elif Cpu.MULTP == self.opCode:
-			if self.verbose :
-				print " multiply (acc) %s and %d" % ( self.acc, self.opVal )
-			self.acc *= self.opVal
-			Cpu.checkOverflow( self )
-		elif Cpu.DIVIDE == self.opCode:
-			if self.verbose :
-				print " divide (acc) %s and %d" % ( self.acc, self.opVal )
-			if 0 == self.opVal:
-				Cpu.fail_coreDump( self, "Divide by zero? No." )
-			else:
-				self.acc /= self.opVal
-				Cpu.checkOverflow( self )
-		elif Cpu.GOTO == self.opCode:
-			if self.verbose :
-				print " naive goto ptr to %d" % self.opAddr
+	
+	''' advanced feature
+	def strI_O( self, type, explanation ) : # PSEUDO: fix this copypasta
+		# input; output to terminal; get length?
+		if self.verbose :
+			print explanation,
+		if type == Cpu.READ :
+			# raw input? file input? raw I think?
+			# the trick is I only see what the loader put in so the compiler has to
+			# generate the values and put them in smlData. This's compiler's job
+			#hmm? self.opAddr -= 1
+			for letter in explanation :
+				self.mem.setAt( self.opAddr + 1, odr( letter ) - 27 )
+		else : # type == Cpu.WRITE
+			str = "" # get and interpret via chr( mem + 27 )
+			print str'''
+	
+	def add( self ) :
+		self.acc += self.opVal
+		Cpu.checkOverflow( self )
+	
+	def subtr( self ) :
+		self.acc -= self.opVal
+		Cpu.checkOverflow( self )
+	
+	def multp( self ) :
+		self.acc *= self.opVal
+		Cpu.checkOverflow( self )
+	
+	def divid( self ) :
+		if 0 == self.opVal:
+			Cpu.fail_coreDump( self, "Divide by zero? No." )
+		else:
+			self.acc /= self.opVal
+		Cpu.checkOverflow( self )
+	
+	def modul( self ) :
+		# no need to check for overflow, the number will be smaller or same
+		self.acc %= self.opVal
+
+	def gotoNow( self ) :
+		Cpu.setPC( self, self.opAddr )
+
+	def gotoNeg( self ) :
+		if 0 > self.acc :
 			Cpu.setPC( self, self.opAddr )
-		elif Cpu.GOTOZERO == self.opCode:
+
+	def gotoZer( self ) :
+		if 0 == self.acc :
+			Cpu.setPC( self, self.opAddr )
+		
+	def load( self ) :
+		self.acc = self.opVal
+
+	def save( self ) :
+		self.mem.setAt( self.opAddr, self.acc )
+
+	def execute( self ) :
+		if self.opCode in Cpu.opSet :
+			if self.opCode == Cpu.READ or self.opCode == Cpu.WRITE :
+				Cpu.i_O( self, self.opCode, self.opVerbs[ self.opCode ] ) # different verbosity
+				return
 			if self.verbose :
-				print " if Acc (%d) is zero, goto %d" % ( self.acc, self.opAddr )
-			if 0 == self.acc:
-				Cpu.setPC( self, self.opAddr )
-		elif Cpu.GOTONEG == self.opCode:
-			if self.verbose :
-				print " if Acc (%d) is neg, goto %d" % ( self.acc, self.opAddr )
-			if 0 > self.acc:
-				Cpu.setPC( self, self.opAddr )
-		elif Cpu.LOAD == self.opCode:
-			if self.verbose :
-				print " load Acc with %d from %d" % ( self.opVal, self.opAddr )
-			self.acc = self.opVal
-		elif Cpu.STORE == self.opCode:
-			if self.verbose :
-				print " save acc, %s, into %d" % ( self.acc, self.opAddr )
-			self.mem.setAt( self.opAddr, self.acc )
+				print self.opVerbs[ self.opCode ]
+			execOp = self.opSet[ self.opCode ]
+			execOp( self ) # I can also skip this step by giving arguments above
 		else :
 			Cpu.fail_coreDump( self, "Unrecognized instruction" )
-			
-	def run( self ):
+
+	def run( self ) :
 		' fetch & execute while running '
 		while self.running:
 			Cpu.fetch( self )
 			Cpu.execute( self )
 			
-	def setPC( self, addr ):
+	def setPC( self, addr ) :
 		' for the goto commands '
 		if self.mem.exceedAddrBound( addr ) :
 				Cpu.fail_coreDump( "Address out of range" )
 		else:
 			self.pc = addr
 	
-	def fail_coreDump( self, reason ):
+	def fail_coreDump( self, reason ) :
 		' hardware error, so write the registers & memory '
 		# I don't think this should silently fail, even if I don't want a verbose cpu
 		print "core dump time: " + reason
@@ -143,4 +179,20 @@ class Cpu( object ):
 		self.mem.coreDump( dump )
 		dump.close( )
 		self.running = False
-		
+	
+	opSet = {
+		0 : halt,
+		STOP : halt,
+		READ : i_O,
+		WRITE : i_O,
+		ADD : add,
+		SUB : subtr,
+		MUL : multp,
+		DIV : divid,
+		MOD : modul,
+		GOTO : gotoNow,
+		GO_ZERO : gotoZer,
+		GO_NEG : gotoNeg,
+		LOAD : load,
+		STORE : save
+		}

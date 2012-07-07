@@ -20,6 +20,8 @@ def evaluate( yVal, operator, xVal ) :
 	elif '/' is operator :
 		#print "%d / %d = %d" % ( int( yVal ), int( xVal ), int( yVal ) / float( xVal ) )
 		return int( yVal ) / float( xVal )
+	elif '%' is operator :
+		return int( yVal ) % float( xVal )
 	else :
 		print "  Unknown operator, undefined behavior mode activated"
 		return yVal
@@ -27,7 +29,7 @@ def evaluate( yVal, operator, xVal ) :
 def evaluatePostfix( postfix ) :
 	' evaluates a postfix expression, I"m assuming the client sends a list of strings '
 	#print "\tevaluate post %s" % postfix
-	operators = [ "/", "*", "+", "-" ]
+	operators = [ "/", "*", "+", "-", "%" ]
 	tempVals = stack.Stack( )
 	index = 0
 	y = 0

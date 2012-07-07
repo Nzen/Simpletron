@@ -1,11 +1,12 @@
-3104
+2104
 0012
 0013
 9999
-4001
-2002
-4103
+2001
+3002
+2103
 1103
+4300
 ##
 
 goto 4 if acc = 0 (it is)
@@ -22,15 +23,15 @@ stop
 Works, but relies on direct addressing for the moment.
 Remove stop to test multiple (sequential) processes
 
-	STOP = 0
-	READ = 10
-	WRITE = 11
-	ADD = 20
-	SUBTR = 21
-	MULTP = 22
-	DIVIDE = 23
-	GOTO = 30
-	GOTOZERO = 31
-	GOTONEG = 32
-	LOAD = 40
-	STORE = 41
+	STOP = 0 # 43
+	READ = 10 # same
+	WRITE = 11 # same
+	ADD_I = 20 # 30
+	SUB_I = 21 # 31
+	MUL_I = 22 # 33
+	DIV_I = 23 # 32
+	GOTO = 30 # 40
+	GO_ZERO = 31 # 42
+	GO_NEG = 32 # 41
+	LOAD = 40 # 20
+	STORE = 41 # 21

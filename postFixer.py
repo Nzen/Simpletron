@@ -20,9 +20,9 @@ def higherPrecedence( opDic, focusOp, fromTempOp ) :
 	
 def convertSilently( infix ) :
 	' no outputs of operations '
-	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2 }
+	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2, "%" : 4 }
 	opStack = stack.Stack( )
-	#infix = infixString.split( ' ' )
+	#infix = infixString.split( ' ' ) # comment for compiller # uncomment for deliberate testing, rename arg
 	postFix = [ ]
 	ind = 0
 	next = 0
@@ -51,17 +51,17 @@ def convertSilently( infix ) :
 		ind += 1
 	while opStack.notEmpty( ) :
 		if opStack.peek( ) is not "(" :
-			postFix.append ( opStack.pop( ) )
+			postFix.append( opStack.pop( ) )
 		else :
 			opStack.pop( )
 	
 	return postFix
 
-def convertVerbosely( infix ) :
+def convertVerbosely( infixString ) :
 	' I didn"t want to muddy the program with 1000 checks if in Debug_Mode '
-	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2 }
+	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2, "%" : 4 }
 	opStack = stack.Stack( )
-	#infix = infixString.split( ' ' )
+	infix = infixString.split( ' ' )
 	postFix = [ ]
 	ind = 0
 	next = 0
