@@ -15,14 +15,14 @@ class Cpu( object ) :
 	LOAD = 20
 	STORE = 21
 	ADD = 30
-	SUB = 31
-	DIV = 32
-	MUL = 33
-	MOD = 34
-	GOTO = 40
-	GO_NEG = 41
-	GO_ZERO = 42
-	STOP = 43
+	SUBTRACT = 31
+	DIVIDE = 32
+	MULTIPLY = 33
+	MODULUS = 34
+	BRANCH = 40
+	BRANCHNEG = 41
+	BRANCHZERO = 42
+	HALT = 43
 
 	def __init__( self, startPC, ramPtr, outputDesirablility ) :
 		self.running = True
@@ -33,21 +33,22 @@ class Cpu( object ) :
 		self.opAddr = 0 # address pointed to in IR
 		self.opVal = 0 # value retrieved from opAddr
 		self.mem = ramPtr
-		self.verbose = outputDesirablility
+		self.verbose = outputDesirablility # I think my earlier test with verbs was insufficient
 		self.opVerbs = {
-			Cpu.STOP : "Halt program",
+			0 : "Halt program",
+			Cpu.HALT : "Halt program",
 			Cpu.READ : " wait for terminal input",
 			Cpu.WRITE : " print to terminal: ",
-			Cpu.ADD : " add (acc) " + str( self.acc ) + " and " + str( self.opVal ),
-			Cpu.SUB : " subtract (acc) " + str( self.acc ) + " from " + str( self.opVal ),
-			Cpu.MUL : " multiply (acc) " + str( self.acc ) + " and " + str( self.opVal ),
-			Cpu.DIV : " divide (acc) " + str( self.acc ) + " by " + str( self.opVal ),
-			Cpu.MOD : " modulus (acc )" + str( self.acc ) + " by " + str( self.opVal ),
-			Cpu.GOTO : " naive goto ptr to " + str( self.opAddr ),
-			Cpu.GO_ZERO : " if Acc (%d) is zero, goto " + str( self.opAddr ),
-			Cpu.GO_NEG : " if Acc (" + str( self.acc ) + ") is neg, goto " + str( self.opAddr ),
 			Cpu.LOAD : " load Acc with " + str( self.opVal ) + " from " + str( self.opAddr ),
-			Cpu.STORE : " save Acc (" + str( self.acc ) + ") into " + str( self.opAddr )
+			Cpu.STORE : " save Acc (" + str( self.acc ) + ") into " + str( self.opAddr ),
+			Cpu.ADD : " add (acc) " + str( self.acc ) + " and " + str( self.opVal ),
+			Cpu.SUBTRACT : " subtract (acc) " + str( self.acc ) + " from " + str( self.opVal ),
+			Cpu.MULTIPLY : " multiply (acc) " + str( self.acc ) + " and " + str( self.opVal ),
+			Cpu.DIVIDE : " divide (acc) " + str( self.acc ) + " by " + str( self.opVal ),
+			Cpu.MODULUS : " modulus (acc )" + str( self.acc ) + " by " + str( self.opVal ),
+			Cpu.BRANCH : " naive goto ptr to " + str( self.opAddr ),
+			Cpu.BRANCHZERO : " if Acc (%d) is zero, goto " + str( self.opAddr ),
+			Cpu.BRANCHNEG : " if Acc (" + str( self.acc ) + ") is neg, goto " + str( self.opAddr )
 			}
 		
 	def checkOverflow( self ):
@@ -85,7 +86,6 @@ class Cpu( object ) :
 			self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
 		else : # type == Cpu.WRITE
 			print self.opVal
-	
 	''' advanced feature
 	def strI_O( self, type, explanation ) : # PSEUDO: fix this copypasta
 		# input; output to terminal; get length?
@@ -149,7 +149,7 @@ class Cpu( object ) :
 				return
 			if self.verbose :
 				print self.opVerbs[ self.opCode ]
-			execOp = self.opSet[ self.opCode ]
+			execOp = Cpu.opSet[ self.opCode ]
 			execOp( self ) # I can also skip this step by giving arguments above
 		else :
 			Cpu.fail_coreDump( self, "Unrecognized instruction" )
@@ -182,17 +182,17 @@ class Cpu( object ) :
 	
 	opSet = {
 		0 : halt,
-		STOP : halt,
+		HALT : halt,
 		READ : i_O,
 		WRITE : i_O,
 		ADD : add,
-		SUB : subtr,
-		MUL : multp,
-		DIV : divid,
-		MOD : modul,
-		GOTO : gotoNow,
-		GO_ZERO : gotoZer,
-		GO_NEG : gotoNeg,
+		SUBTRACT : subtr,
+		MULTIPLY : multp,
+		DIVIDE : divid,
+		MODULUS : modul,
+		BRANCH : gotoNow,
+		BRANCHZERO : gotoZer,
+		BRANCHNEG : gotoNeg,
 		LOAD : load,
 		STORE : save
 		}

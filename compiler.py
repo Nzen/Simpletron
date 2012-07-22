@@ -3,8 +3,88 @@
 # begun 12 1 11
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
-'''
-	todays notes
+'''	todays notes
+
+	using math.txt
+        Contents of Symbol Table        index - 12
+sym     type    location
+0       line num        0
+x       variable        29
+0       const num       28
+10      line num        1
+y       variable        27
+5       const num       26
+11      line num        4
+12      line num        8
+13      line num        9
+n       variable        25
+14      line num        17
+15      line num        18
+19      line num        19
+
+Instr count - 19        Data counter - 23
+        Contents of sml data bank
+        0       1       2       3       4
+0       2129    2026    3026    2127    2027
+5       3029    3026    3028    2129    2027
+10      3226    2124    2029    3328    2123
+15      3123    2125    1129    1127    1125
+20      0000    0000    0000    0000    0000
+25      0000    0005    0000    0000    0000    done
+Run sml file? y/n -- y
+ save Acc (0) into 0
+ load Acc with 0 from 0
+ add (acc) 0 and 0
+ save Acc (0) into 0
+ load Acc with 0 from 0
+ add (acc) 0 and 0
+ add (acc) 0 and 0
+ add (acc) 0 and 0
+ save Acc (0) into 0
+ load Acc with 0 from 0
+ divide (acc) 0 by 0
+ save Acc (0) into 0
+ load Acc with 0 from 0
+ multiply (acc) 0 and 0
+ save Acc (0) into 0
+ subtract (acc) 0 from 0
+ save Acc (0) into 0
+ print to terminal:  15
+ print to terminal:  10
+ print to terminal:  0
+Halt program
+
+sml disassemb
+ 0 store acc into 29	# I think it is the check 'if eqInd + 2 == postfix.__len__( ) '
+ 1 load acc from 26 	# that determines whether to use resolveAcc()
+ 2 ++ acc & from 26 	# it doesn't, so 0 is supposedly in the acc and stored into x
+ 3 store acc into 27	# when really, 0 should be loaded into the acc and then stored in 29
+ 4 load acc from 27
+ 5 ++ acc & from 29
+ 6 ++ acc & from 26
+ 7 ++ acc & from 28
+ 8 store acc into 29
+ 9 load acc from 27
+ 10 * * acc & from 26
+ 11 store acc into 24
+ 12 load acc from 29
+ 13 / / acc & from 28
+ 14 store acc into 23
+ 15 - - acc & from 23
+ 16 store acc into 25
+ 17 print from 29
+ 18 print from 27
+ 19 print from 25
+
+simple program
+ 0 let x = 0
+ 10 let y = 5 + 5
+ 11 let x = x + y + 5 + 0
+ 12 rem
+ 13 let n = 5 * y - 0 / x
+ 14 print x
+ 15 print y
+ 19 print n
 '''
 
 import postFixer
@@ -34,23 +114,23 @@ class SCompiler( object ) :
 	WRITE = 1100
 	LOAD  = 2000
 	STORE = 2100
-	ADD_I = 3000
-	SUB_I = 3100
-	MUL_I = 3200
-	DIV_I = 3300
-	MOD_I = 3400
-	GOTO  = 4000
-	GO_ZERO = 4100
-	GO_NEG = 4200
-	STOP  = 4300 # Matches spec, but cpu thinks 0 also is stop, as per Warford
+	ADD = 3000
+	SUBTRACT = 3100
+	MULTIPLY = 3200
+	DIVIDE = 3300
+	MODULUS = 3400
+	BRANCH  = 4000
+	BRANCHZERO = 4100
+	BRANCHNEG = 4200
+	HALT  = 4300 # Matches spec, but cpu thinks 0 also is stop, as per Warford
 	RAMSIZE = 100 # so bad accesses halt safely rather than fail_coreDump()
 	#
 	LINE = 0
-	VAR = 1
+	VAR  = 1
 	CONST = 2
 	ARRAY = 3
 	FUNCT = 4
-	PHRAS = 5
+	PHRASE = 5 # haha, a string
 	RESERVE = True
 	TESTING = False
 	FAILED = False # for testing when syntaxError shouldn't exit( )
@@ -58,8 +138,9 @@ class SCompiler( object ) :
 	def __init__( self ) :
 		self.symbolTable = [ TableEntry( ) for i in range( SCompiler.RAMSIZE ) ]
 		# consider appending to symbol table rather than using an index?
-		self.lineFlags = [ -1 ] * SCompiler.RAMSIZE # notes which fail, only because of spec else I'd use a list
-		self.smlData = [ 0 ] * SCompiler.RAMSIZE # floods ram later 	// ^ may do anyway, later
+		self.lineFlags = [ -1 ] * SCompiler.RAMSIZE
+		# notes which fail, only because of spec else I'd append to a tuple or dict
+		self.smlData = [ 0 ] * SCompiler.RAMSIZE # floods ram later
 		self.instructionCounter = -1
 		self.dataCounter = SCompiler.RAMSIZE # sc.RS - 1? 12 3 18
 		self.currSym = -1 # index in symbol table of latest
@@ -67,7 +148,7 @@ class SCompiler( object ) :
 
 	def showSymbolTable( self ) :
 		print "\n\tContents of Symbol Table\tindex - " + str( self.currSym )
-		print "sym\ttype\tlocation"
+		print "sym\ttype\t\tlocation"
 		ind = 0
 		limit = self.currSym #self.symbolTable.__len__( )
 		while ( ind <= limit ) :
@@ -88,23 +169,22 @@ class SCompiler( object ) :
 			ind += 1
 
 	def showMem( self ) :
-		print
-		print "Instr count - " + str( self.instructionCounter ) + "\tData counter - " + str( self.dataCounter )
+		print "\nInstr count - " + str( self.instructionCounter ) + "\tData counter - " \
+			+ str( self.dataCounter )
 		print "\tContents of sml data bank"
 		ind = 0
 		vert = 0
 		#off = 0
 		maxVert = 5
 		lim = self.smlData.__len__( )
+		# header
 		for yy in range( 0, 5 ) : # should reflect memory size
 			print '\t' + str( yy ),
-		print
-		print '\t',
+		print '\n0\t',
 		while ind < lim :
 			if vert >= maxVert :
 				vert = 0
-				print
-				print ( str( ind ) + '\t' ),
+				print ( '\n' + str( ind ) + '\t' ),
 			print ( str( self.smlData[ ind ] ).rjust( 4, '0' ) + '\t' ),
 			ind += 1
 			vert += 1
@@ -329,59 +409,26 @@ class SCompiler( object ) :
 	def checkFirstTwoChars( self, varNequal ) :
 		if varNequal[ 0 ].isdigit( ) :
 			SCompiler.syntaxError( self, "Can't assign new values to numbers" )
+		# also, don't assign to lengths.
 		elif varNequal[ 1 ] is not "=" :
 			SCompiler.syntaxError( self, "Expected '=' after assignment target " + varNequal[ 0 ] )
+	
+	def isOperator( self, char ) :
+		return char in SCompiler.operators
 		
-	def checkForUnexpected( self, expression ) :
-		'realistically, I should determine the alternating nature of the expression. Later' # ( ( ( x - 5 / x ) + z ) ) - a
+	def checkForUnexpected( self, expression ) : # refactor to less magic numbers
+		'realistically, I should determine the alternating nature of the expression. Later'
+		# ( ( ( x - 5 / x ) + z ) ) - a
 		# # pair parenthises => x - 5 / x + z - a ; check alternating alnum operator
-		'''
-		ind = 0
-		lim = len( expression ) # yak shaving?
-		worked = True
-		while ind <= lim : # FSM oooh, what regex facilities does python have?
-			if expression[ ind ].isalnum( ) :
-				ind += 1
-				worked = True
-			elif expression[ ind ] is '(' or expression[ ind ] is ')' : # postfix can handle matching, if it does
-				ind += 1
-				worked = True
-			else :
-				worked = False
-				break
-			if expression[ ind ] in operators :
-				ind += 1
-				worked = True
-			else :
-				SCompiler.syntaxError( self, "Invalid symbol in expression " + ex ) # or I didn't expect it
-			'''	# I'll figure out something eventually
+		# I'll figure out something eventually
 		#
-		operators = [ '+', '-', '*', '/', '(', ')' ]
 		for ex in expression :
 			if ex.isalnum( ) :
 				continue
-			elif ex in operators :
+			elif SCompiler.isOperator( self, ex ) :
 				continue
 			else :
 				SCompiler.syntaxError( self, "Invalid symbol in expression " + ex )
-
-	def spotForTempAnswer( self ) :
-		SCompiler.prepDataLocation( self )
-		return self.dataCounter
-
-	def mathProduction( self, whereY, operator, whereX ) :
-		'calls Y to acc, applys operator with X to acc, stores result'
-		# Y into accumulator
-		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + whereY
-		SCompiler.prepInstruction( self )
-		# apply X to accumulator
-		self.smlData[ self.instructionCounter ] = operator + whereX
-		SCompiler.prepInstruction( self )
-		# store acc into new spot
-		tempLocation = SCompiler.spotForTempAnswer( self )
-		self.smlData[ self.instructionCounter ] = SCompiler.STORE + tempLocation
-		SCompiler.prepInstruction( self ) # for the next pass or final storage
-		return tempLocation # returning location because there is no symbol
 		
 	def checkDenominator( self, whereDenominator ) :
 		"unreliable check if denom = 0; loops through symTab looking for location"
@@ -399,68 +446,134 @@ class SCompiler( object ) :
 					if self.symbolTable[ ind ].symbol != 0 :
 						return # safe denominator
 					else :
+						#print self.symbolTable[ ind ].symbol
 						SCompiler.syntaxError( self, "You put a zero as a denominator" ) 
 				else : # is a variable
 					# compromise since it could be anything.
 					print "Warning: potential zero denominator at line %d" % self.lastLine
 					return
 			ind += 1
+	
+	def orderSensitive( self, mathOperator ) :
+		return mathOperator != '+' and mathOperator != '*' and mathOperator != '>'
 
-	def evaluateCode( self, whereY, operator, whereX ) :
-		'produces production operations for the computation, returns location of result'
-		# Deitel suggests only using the full production at the end
+	def saveVal( self, symb, type ) :
+		symIndex = SCompiler.getSymbolIndex( self, symb, type, SCompiler.RESERVE )
+		whereMem = self.symbolTable[ symIndex ].location
+		return whereMem
+
+	def saveTempVal( self ) :
+		SCompiler.prepDataLocation( self )
+		return self.dataCounter
+		
+	def loadInAcc( self, memLocation ) :
+		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + memLocation
+		SCompiler.prepInstruction( self )
+	
+	def storeAcc( self ) :
+		# weird to move around information that my future self generates
+		memLocation = SCompiler.saveTempVal( self )
+		self.smlData[ self.instructionCounter ] = SCompiler.STORE + memLocation
+		SCompiler.prepInstruction( self )
+		return memLocation
+
+	def performOperation( self, opCode, memLocation ) :
+		self.smlData[ self.instructionCounter ] = opCode + memLocation
+		SCompiler.prepInstruction( self )
+
+	def applyOperation( self, operator, memLocation ) :
 		if '+' == operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.ADD_I, whereX )
+			SCompiler. performOperation( self, SCompiler.ADD, memLocation )
 		elif '-' == operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.SUB_I, whereX )
+			SCompiler. performOperation( self, SCompiler.SUBTRACT, memLocation )
 		elif '*' == operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.MUL_I, whereX )
+			SCompiler. performOperation( self, SCompiler.MULTIPLY, memLocation )
 		elif '/' == operator :
-			SCompiler.checkDenominator( self, whereX )
-			return SCompiler.mathProduction( self, whereY, SCompiler.DIV_I, whereX )
+			#SCompiler.checkDenominator( self, memLocation ) # um, not always?
+			# sin, I hate to not check but this just became past my available time to resolve
+			# make sure that this is checking the denominator
+			# because it said n = 5 * y - 0 / x is a const in the denominator
+			## problem, this IS treating 0 as the denominator, am I applying it backwards?
+			SCompiler. performOperation( self, SCompiler.DIVIDE, memLocation )
 		elif '%' == operator :
-			return SCompiler.mathProduction( self, whereY, SCompiler.MOD_I, whereX )
+			SCompiler. performOperation( self, SCompiler.MODULUS, memLocation )
 		else :
-			pass# assert: unreachable
+			pass # assert: unreachable
 
-	def evaluatePostFix( self, postfix ) :
-		' convert polish equation to SML instructions & mem reservations '
+	def resolveAcc( self, stack, next, afterNext ) :
+		'Optimization: do I store or leave value in acc? returns firstValStored'
+		saveOver = True
+		if SCompiler.isOperator( self, next ) : ## ? x 5 + _
+			if SCompiler.orderSensitive( self, next ) : ## 5 x 5 + /
+				saveOver = True
+				memLocation = SCompiler.storeAcc( self )
+				stack.push( memLocation ) # garbage collect as next optimization
+			else :								## ? x 5 + +
+				saveOver = False # mixing metaphores here as first is actually stored
+		elif SCompiler.isOperator( self, afterNext ) : # ? x 5 + ? _
+			if SCompiler.orderSensitive( self, afterNext ) :
+				saveOver = True
+				memLocation = SCompiler.storeAcc( self ) ## 5 x 5 + /
+				stack.push( memLocation )
+			else :								## ? x 5 + ? *
+				saveOver = False # save next, then apply
+		else : # ? x 5 + ? x ; these are separate expressions, joined later
+			saveOver = False
+			memLocation = SCompiler.storeAcc( self )
+			stack.push( memLocation )
+			# sin, will tempVals retain the change? I forget. python.
+		return saveOver
+	
+	def evaluatePostFix( self, postfix ) : # fixing from pseudo
+		'convert polish equation to SML instructions & mem reservations '
 		tempVals = stack.Stack( )
-		ind = 0 # was name conflicting with indecies below
-		y = 0
+		eqInd = 0
 		x = 0
+		y = 0
+		peek = 0
+		memLocation = 0
+		firstValStored = False # only applies to explicit vals, not temps
 		postfix.append( ">" ) # sentinel
-		focus = postfix[ ind ]
-		while ">" is not focus :
-			if focus.isdigit( ) :
-				symIndex = SCompiler.getSymbolIndex( self, focus, SCompiler.CONST, SCompiler.RESERVE )
-				whereMem = self.symbolTable[ symIndex ].location
-				tempVals.push( whereMem )
-			elif focus.isalpha( ) :
-				symIndex = SCompiler.getSymbolIndex( self, focus, SCompiler.VAR, SCompiler.RESERVE )
-				whereMem = self.symbolTable[ symIndex ].location
-				tempVals.push( whereMem )
-			else : # isOperator( )
-				x = tempVals.pop( )
-				y = tempVals.pop( )
-				tempLocation = SCompiler.evaluateCode( self, y, focus, x )
-				tempVals.push( tempLocation )
-			ind += 1
-			focus = postfix[ ind ]
-		return tempVals.pop( ) # answer location
+		focus = postfix[ eqInd ]
+		while '>' != focus :
+			if not SCompiler.isOperator( self, focus ) :
+				if focus.isdigit( ) :
+					memLocation = SCompiler.saveVal( self, int( focus ), SCompiler.CONST )
+				elif focus.isalpha( ) :
+					memLocation = SCompiler.saveVal( self, focus, SCompiler.VAR )
+				# else handle an array lookup aRR[x] or array Length: aRR.len or str.len
+				if not firstValStored :
+					tempVals.push( memLocation )
+					firstValStored = True
+				else :
+					SCompiler.loadInAcc( self, memLocation )
+			else : # operator
+				memLocation = tempVals.pop()
+				SCompiler.applyOperation( self, focus, memLocation )
+				if eqInd + 2 == postfix.__len__( ) : # ie next is sentinel
+					break
+				else :
+					firstValStored = SCompiler.resolveAcc( self, \
+					tempVals, postfix[ eqInd + 1 ], postfix[ eqInd + 2 ] )
+			# does firstValStored stand up to multiple expressions? 5 8 6 4 + + +
+			# or is that invalid polish notation? It's been too long since I made postfixer
+			# so I'm probably overspecifying that optimization
+			eqInd += 1
+			focus = postfix[ eqInd ]
 
 	def assignment( self, restOfLine ) :
 		'form of let x = ( y + 2 ) / 99 * z'
-		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # that's not consistent slicing syntax, Guido
+		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # x =
+		# that's not consistent slicing syntax, Guido
 		SCompiler.checkForUnexpected( self, restOfLine[ 2: ] )
-		indexFinal = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
-		decrypted = postFixer.convertToPostFix( restOfLine[ 2: ], False ) # cut x = ; convert the rest via shunting yard
-		penultimateLocation = SCompiler.evaluatePostFix( self, decrypted ) # mixing locations & symTab indexes is weird
-		# penultimate into acc
-		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + penultimateLocation ## should I make this sort of assignment OO style?
-		SCompiler.prepInstruction( self )
-		# store into whereFinal
-		self.smlData[ self.instructionCounter ] = SCompiler.STORE + self.symbolTable[ indexFinal ].location
+		indexFinal = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], \
+			SCompiler.VAR, SCompiler.RESERVE )
+		# convert the rest via shunting yard
+		decrypted = postFixer.convertToPostFix( restOfLine[ 2: ], False )
+		SCompiler.evaluatePostFix( self, decrypted )
+		# answer left in the acc, store into x
+		self.smlData[ self.instructionCounter ] = SCompiler.STORE + \
+			self.symbolTable[ indexFinal ].location
 
 	def saveThisLinesNumber( self, lineNumber ) :
 		'save the line number in symbolTable; since increasing, dont search'
@@ -543,6 +656,8 @@ class SCompiler( object ) :
 		"input" : userInput,
 		"print" : screenOutput,
 		}
+	operators = [ "/", "*", "+", "-", "%", ">" ]
+	# added sentinel to guard against array overflow during optimization
 
 '''	OUTPUT
         using monkey.txt

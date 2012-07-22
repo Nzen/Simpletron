@@ -2,11 +2,12 @@
 class Stack( object ) :
 	
 	def __init__( self ) :
-		' why am I reimplementing this? I am this close to trashing this '
+		' standard base 0 stack '
 		self.stak = [ ]
 		self.top = -1
 	
 	def pop( self ) :
+		' return & remove top '
 		if Stack.empty( self ) :
 			print "fail"
 			exit( 1 )
@@ -16,8 +17,9 @@ class Stack( object ) :
 		
 	def peek( self ) :
 		" This is why, lists don't appear to offer peek "
-		# they do, but you have to keep track of top then, don't you
-		# which means TADA creating a stack class. STL ftw.
+		# they do, but you have to keep track of top then, don't you?
+		# which means *TADA* creating a stack class. STL ftw. But dicts make up for it
+		# should I switch to returning None?
 		if Stack.empty( self ) :
 			print "fail"
 			exit( 1 )
@@ -41,7 +43,7 @@ class Stack( object ) :
 			self.stak[ self.top ] = val
 
 	def printStack( self ) :
-		# lord, python For loops.
+		# lord, python For loops. Switch to while? nah
 		if Stack.notEmpty( self ) :
 			print "stack:\t",
 			for ind in range( 0, self.top + 1 ) :
