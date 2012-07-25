@@ -34,7 +34,7 @@ def run( file ) :
 	cmd.run( )
 
 verbose = True
-#run( argv[ 1 ] ) # uncomment here & line 7 to test explicitly
+#run( argv[ 1 ] ) # uncomment here & line 7 to test cpu explicitly
 '''
 	Bad examples of using exec( ):
 >>>

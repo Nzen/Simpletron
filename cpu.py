@@ -33,23 +33,7 @@ class Cpu( object ) :
 		self.opAddr = 0 # address pointed to in IR
 		self.opVal = 0 # value retrieved from opAddr
 		self.mem = ramPtr
-		self.verbose = outputDesirablility # I think my earlier test with verbs was insufficient
-		self.opVerbs = {
-			0 : "Halt program",
-			Cpu.HALT : "Halt program",
-			Cpu.READ : " wait for terminal input",
-			Cpu.WRITE : " print to terminal: ",
-			Cpu.LOAD : " load Acc with " + str( self.opVal ) + " from " + str( self.opAddr ),
-			Cpu.STORE : " save Acc (" + str( self.acc ) + ") into " + str( self.opAddr ),
-			Cpu.ADD : " add (acc) " + str( self.acc ) + " and " + str( self.opVal ),
-			Cpu.SUBTRACT : " subtract (acc) " + str( self.acc ) + " from " + str( self.opVal ),
-			Cpu.MULTIPLY : " multiply (acc) " + str( self.acc ) + " and " + str( self.opVal ),
-			Cpu.DIVIDE : " divide (acc) " + str( self.acc ) + " by " + str( self.opVal ),
-			Cpu.MODULUS : " modulus (acc )" + str( self.acc ) + " by " + str( self.opVal ),
-			Cpu.BRANCH : " naive goto ptr to " + str( self.opAddr ),
-			Cpu.BRANCHZERO : " if Acc (%d) is zero, goto " + str( self.opAddr ),
-			Cpu.BRANCHNEG : " if Acc (" + str( self.acc ) + ") is neg, goto " + str( self.opAddr )
-			}
+		self.verbose = outputDesirablility
 		
 	def checkOverflow( self ):
 		' if exceeds wordsize, either positively or negatively '
@@ -57,6 +41,36 @@ class Cpu( object ) :
 			Cpu.fail_coreDump( self, "Accumulator overflow" )
 		elif Cpu.negWordLim > self.acc:
 			Cpu.fail_coreDump( self, "Accumulator underflow" )
+	
+	def explain( self, operation ) :
+		if operation == 0 or operation == Cpu.HALT :
+			print "Halt program"
+		elif operation == Cpu.READ :
+			print " wait for terminal input",
+		elif operation == Cpu.WRITE :
+			print " print to terminal: ",
+		elif operation == Cpu.LOAD :
+			print " load Acc with %d from %d" % ( self.opVal, self.opAddr )
+		elif operation == Cpu.STORE :
+			print " save Acc (%d) into %d" % ( self.acc, self.opAddr )
+		elif operation == Cpu.ADD :
+			print " add (acc) %d and %d" % ( self.acc, self.opVal )
+		elif operation == Cpu.SUBTRACT :
+			print " subtract (acc) %d and %d" % ( self.acc, self.opVal )
+		elif operation == Cpu.MULTIPLY :
+			print " multiply (acc) %d and %d" % ( self.acc, self.opVal )
+		elif operation == Cpu.DIVIDE :
+			print " divide (acc) %d by %d" % ( self.acc, self.opVal )
+		elif operation == Cpu.MODULUS :
+			print " modulus (acc) %d by %d" % ( self.acc, self.opVal )
+		elif operation == Cpu.BRANCH :
+			print " naive goto ptr to %d" % ( self.opAddr )
+		elif operation == Cpu.BRANCHZERO :
+			print " if Acc (%d) is zero, goto %d" % ( self.acc, self.opAddr )
+		elif operation == Cpu.BRANCHNEG :
+			print " if Acc (%d) is neg, goto %d" % ( self.acc, self.opAddr )
+		else :
+			assert false # unreachable?
 	
 	def fillRegisters( self ) :
 		self.ir = self.mem.getFrom( self.pc )
@@ -79,13 +93,12 @@ class Cpu( object ) :
 	def halt( self ) :
 		self.running = False
 	
-	def i_O( self, type, explanation ) :
-		if self.verbose :
-			print explanation,
-		if type == Cpu.READ :
-			self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
-		else : # type == Cpu.WRITE
-			print self.opVal
+	def stdIn( self ) :
+		self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
+	
+	def stdOut( self ) :
+		print self.opVal
+			
 	''' advanced feature
 	def strI_O( self, type, explanation ) : # PSEUDO: fix this copypasta
 		# input; output to terminal; get length?
@@ -144,11 +157,8 @@ class Cpu( object ) :
 
 	def execute( self ) :
 		if self.opCode in Cpu.opSet :
-			if self.opCode == Cpu.READ or self.opCode == Cpu.WRITE :
-				Cpu.i_O( self, self.opCode, self.opVerbs[ self.opCode ] ) # different verbosity
-				return
 			if self.verbose :
-				print self.opVerbs[ self.opCode ]
+				Cpu.explain( self, self.opCode )
 			execOp = Cpu.opSet[ self.opCode ]
 			execOp( self ) # I can also skip this step by giving arguments above
 		else :
@@ -183,8 +193,8 @@ class Cpu( object ) :
 	opSet = {
 		0 : halt,
 		HALT : halt,
-		READ : i_O,
-		WRITE : i_O,
+		READ : stdIn,
+		WRITE : stdOut,
 		ADD : add,
 		SUBTRACT : subtr,
 		MULTIPLY : multp,

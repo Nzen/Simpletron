@@ -288,7 +288,7 @@ class SCompiler( object ) :
 
 	def finished( self, restOfLine ) :
 		"# halt"
-		self.smlData[ self.instructionCounter ] = SCompiler.STOP
+		self.smlData[ self.instructionCounter ] = SCompiler.HALT
 
 	def userInput( self, restOfLine ) :
 		"# input x (meaning) store input in var x"
@@ -331,22 +331,26 @@ class SCompiler( object ) :
 		if not lineTarget.isdigit( ) :
 			SCompiler.syntaxError( self, "can't jump to variable " + lineTarget + ", only to int line numbers" )
 		whereIndex = SCompiler.getSymbolIndex( self, lineTarget, SCompiler.LINE, not SCompiler.RESERVE )
-		SCompiler.goto( self, SCompiler.GOTO, whereIndex, SCompiler.symbFound( self, whereIndex ), lineTarget )
+		SCompiler.goto( self, SCompiler.BRANCH, whereIndex, \
+				SCompiler.symbFound( self, whereIndex ), lineTarget )
 
-	def simulateOrEquals( self ) :
+	def simulateOrEquals( self ) : # fix
 		'subtract one more to push an equals to neg'
 		# given x>y, y-x < 0; if I want x>=y then y-x may = 0
+		## CUT THIS, substitute subtracting one from limit
 		indOfOne = SCompiler.getSymbolIndex( self, 1, SCompiler.CONST, SCompiler.RESERVE )
 		SCompiler.prepInstruction( self )
-		self.smlData[ self.instructionCounter ] = SCompiler.SUB_I + self.symbolTable[ indOfOne ].location
+		self.smlData[ self.instructionCounter ] = SCompiler.SUBTRACT + self.symbolTable[ indOfOne ].location
 
 	def conditionalProduction( self, firstInd, secondInd, orEqual ) :
 		'loads first, subtracts second; IF orEqualTo subtracts one more, so GO_NEG works'
 		# save: load first to acc
-		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + self.symbolTable[ firstInd ].location
+		self.smlData[ self.instructionCounter ] = SCompiler.LOAD + \
+				self.symbolTable[ firstInd ].location
 		# save: subtract second from first
 		SCompiler.prepInstruction( self )
-		self.smlData[ self.instructionCounter ] = SCompiler.SUB_I + self.symbolTable[ secondInd ].location
+		self.smlData[ self.instructionCounter ] = SCompiler.SUBTRACT + \
+				self.symbolTable[ secondInd ].location
 		if orEqual :
 			SCompiler.simulateOrEquals( self )
 
@@ -385,13 +389,13 @@ class SCompiler( object ) :
 		# resolve goto
 		whereLine = SCompiler.getSymbolIndex( self, lineNumSymb, SCompiler.LINE, not SCompiler.RESERVE )
 		SCompiler.prepInstruction( self )
-		SCompiler.goto( self, SCompiler.GO_NEG, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
+		SCompiler.goto( self, SCompiler.BRANCHNEG, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
 	
 	def equalityConditional( self, whereX, whereY, comparison, lineNumSymb ) :
 		SCompiler.conditionalProduction( self, whereX, whereY, False ) # not orEquals
 		whereLine = SCompiler.getSymbolIndex( self, lineNumSymb, SCompiler.LINE, not SCompiler.RESERVE )
 		SCompiler.prepInstruction( self )
-		SCompiler.goto( self, SCompiler.GO_ZERO, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
+		SCompiler.goto( self, SCompiler.BRANCHZERO, whereLine, SCompiler.symbFound( self, whereLine ), lineNumSymb )
 	
 	def conditional( self, restOfLine ) :
 		"# if x > y goto #2"
@@ -565,6 +569,7 @@ class SCompiler( object ) :
 		'form of let x = ( y + 2 ) / 99 * z'
 		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # x =
 		# that's not consistent slicing syntax, Guido
+		print restOfLine
 		SCompiler.checkForUnexpected( self, restOfLine[ 2: ] )
 		indexFinal = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], \
 			SCompiler.VAR, SCompiler.RESERVE )
@@ -656,7 +661,7 @@ class SCompiler( object ) :
 		"input" : userInput,
 		"print" : screenOutput,
 		}
-	operators = [ "/", "*", "+", "-", "%", ">" ]
+	operators = [ "/", "*", "+", "-", "%", ">", '(', ')' ]
 	# added sentinel to guard against array overflow during optimization
 
 '''	OUTPUT
