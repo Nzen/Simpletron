@@ -7,6 +7,8 @@ import smlDisassemb
 import comp
 from sys import argv
 
+## let user specify verbosity via args
+
 def test_syntaxError( compiler ) : # unready 12 2 8
 	'handle syntax error'
 	# syntaxError( self, why ) :
@@ -86,22 +88,26 @@ def test_programTooBig( compiler ) : # review 12 2 8
 	compiler.instructionCounter = iC
 	return result
 
-compiler.SCompiler.RAMSIZE = 30
+compiler.SCompiler.RAMSIZE = 30 # comment out for full size ram
 simple = compiler.SCompiler( )
+verbose = False
+if argv.__len__() > 2 :
+	if argv[ 2 ] == '-v' :
+		verbose = True
 file = argv[ 1 ]
 print "\tusing %s" % file
-#compiler.SCompiler.TESTING = True # well that's ugly; to change a class member in another module
-smlName = simple.compile( file )
+smlName = simple.compile( file, verbose )
+#compiler.SCompiler.TESTING = True
 #print "validate worked? %r" % test_validateCommandType( simple )
-## it was cute the first few times to rename smlOpcodes by hand. I'll CUT it when I issue the final version
 smlDisassemb.explainSml( smlName )
-run = raw_input( "Run sml file? y/n -- " )
+run = raw_input( "\nRun sml file? y/n -- " )
 if run.find( "y" ) >= 0 or run.find( "Y" ) >= 0 : # I know, extremely simplistic.
+	comp.verbose = verbose
 	comp.run( smlName )
 else :
 	print smlName + " ready"
-'''
 
+'''
 # Oh yeah, that's what I'm talking about
 for test in allFunctions :
 	if not test( tool ) :

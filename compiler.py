@@ -4,87 +4,19 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
+testCompiler has optional arg -v after the file name to make it verbose.
+	if that's tedious during testing, I'll flip it to -s for silent
+resolved naive let; extracted both types
+testPost back in main; when uncommented, is verbose flag sensitive
+	postF less spam from verb
+>> fix order sensitive operations working
 
-	using math.txt
-        Contents of Symbol Table        index - 12
-sym     type    location
-0       line num        0
-x       variable        29
-0       const num       28
-10      line num        1
-y       variable        27
-5       const num       26
-11      line num        4
-12      line num        8
-13      line num        9
-n       variable        25
-14      line num        17
-15      line num        18
-19      line num        19
-
-Instr count - 19        Data counter - 23
-        Contents of sml data bank
-        0       1       2       3       4
-0       2129    2026    3026    2127    2027
-5       3029    3026    3028    2129    2027
-10      3226    2124    2029    3328    2123
-15      3123    2125    1129    1127    1125
-20      0000    0000    0000    0000    0000
-25      0000    0005    0000    0000    0000    done
-Run sml file? y/n -- y
- save Acc (0) into 0
- load Acc with 0 from 0
- add (acc) 0 and 0
- save Acc (0) into 0
- load Acc with 0 from 0
- add (acc) 0 and 0
- add (acc) 0 and 0
- add (acc) 0 and 0
- save Acc (0) into 0
- load Acc with 0 from 0
- divide (acc) 0 by 0
- save Acc (0) into 0
- load Acc with 0 from 0
- multiply (acc) 0 and 0
- save Acc (0) into 0
- subtract (acc) 0 from 0
- save Acc (0) into 0
- print to terminal:  15
- print to terminal:  10
- print to terminal:  0
-Halt program
-
-sml disassemb
- 0 store acc into 29	# I think it is the check 'if eqInd + 2 == postfix.__len__( ) '
- 1 load acc from 26 	# that determines whether to use resolveAcc()
- 2 ++ acc & from 26 	# it doesn't, so 0 is supposedly in the acc and stored into x
- 3 store acc into 27	# when really, 0 should be loaded into the acc and then stored in 29
- 4 load acc from 27
- 5 ++ acc & from 29
- 6 ++ acc & from 26
- 7 ++ acc & from 28
- 8 store acc into 29
- 9 load acc from 27
- 10 * * acc & from 26
- 11 store acc into 24
- 12 load acc from 29
- 13 / / acc & from 28
- 14 store acc into 23
- 15 - - acc & from 23
- 16 store acc into 25
- 17 print from 29
- 18 print from 27
- 19 print from 25
-
-simple program
- 0 let x = 0
- 10 let y = 5 + 5
- 11 let x = x + y + 5 + 0
- 12 rem
- 13 let n = 5 * y - 0 / x
- 14 print x
- 15 print y
- 19 print n
+	Remaining tasks
+>> replace orEquals() with a decremented target, not subtraction
+>> refactor checkForUnexpected()
+> consider saving program as a grid? means changing disassembler and comp
+> rename comp to testCpu?
+> consider making heirarchal table of functions, this is ugly to look through
 '''
 
 import postFixer
@@ -145,6 +77,7 @@ class SCompiler( object ) :
 		self.dataCounter = SCompiler.RAMSIZE # sc.RS - 1? 12 3 18
 		self.currSym = -1 # index in symbol table of latest
 		self.lastLine = -1 # for checkLineNumIncreasing
+		self.verbose = False
 
 	def showSymbolTable( self ) :
 		print "\n\tContents of Symbol Table\tindex - " + str( self.currSym )
@@ -266,7 +199,7 @@ class SCompiler( object ) :
 			self.symbolTable[ symInd ].location = self.instructionCounter
 		return symInd
 
-	def getType( self, unknown ) :
+	def getType( self, unknown ) : # needs more complex later
 		'Only for var & const. Instances of line numbers are invariant'
 		if unknown.isdigit( ) :
 			return SCompiler.CONST
@@ -334,7 +267,7 @@ class SCompiler( object ) :
 		SCompiler.goto( self, SCompiler.BRANCH, whereIndex, \
 				SCompiler.symbFound( self, whereIndex ), lineTarget )
 
-	def simulateOrEquals( self ) : # fix
+	def simulateOrEquals( self ) : # REPLACE
 		'subtract one more to push an equals to neg'
 		# given x>y, y-x < 0; if I want x>=y then y-x may = 0
 		## CUT THIS, substitute subtracting one from limit
@@ -504,7 +437,7 @@ class SCompiler( object ) :
 		else :
 			pass # assert: unreachable
 
-	def resolveAcc( self, stack, next, afterNext ) :
+	def resolveAcc( self, stack, next, afterNext ) : # fix
 		'Optimization: do I store or leave value in acc? returns firstValStored'
 		saveOver = True
 		if SCompiler.isOperator( self, next ) : ## ? x 5 + _
@@ -527,8 +460,37 @@ class SCompiler( object ) :
 			stack.push( memLocation )
 			# sin, will tempVals retain the change? I forget. python.
 		return saveOver
-	
-	def evaluatePostFix( self, postfix ) : # fixing from pseudo
+
+'''def evaluate( yVal, operator, xVal ) :
+	if '+' is operator :
+		return yVal ) + xVal )
+	elif '-' is operator :
+		return yVal ) - xVal )
+	elif '*' is operator :
+		return yVal ) * xVal )
+	elif '/' is operator :
+		return yVal ) / float( xVal )
+	elif '%' is operator :
+		return yVal ) % float( xVal )
+	else :
+		print "  Unknown operator, undefined behavior mode activated"
+		return yVal
+
+def evaluatePostfix( postfix ) :
+	' evaluates a postfix expression, I"m assuming the client sends a list of strings '
+	while ">" != focus :
+		if focus.isdigit( ) :
+			tempVals.push( focus )
+		elif isOperator( operators, focus ) :
+			x = tempVals.pop( )
+			y = tempVals.pop( )
+			tempVals.push( evaluate( y, focus, x ) )
+			tempVals.printStack( )
+		index += 1
+		focus = postfix[ index ]
+	return tempVals.pop( )'''
+
+	def evaluatePostFix( self, postfix ) :
 		'convert polish equation to SML instructions & mem reservations '
 		tempVals = stack.Stack( )
 		eqInd = 0
@@ -559,26 +521,41 @@ class SCompiler( object ) :
 				else :
 					firstValStored = SCompiler.resolveAcc( self, \
 					tempVals, postfix[ eqInd + 1 ], postfix[ eqInd + 2 ] )
-			# does firstValStored stand up to multiple expressions? 5 8 6 4 + + +
+			# does firstValStored stand up to multiple expressions?
+				# I keep thinking 5 8 6 4 + + +, but only seen 3 4 + 5 + 6 7 + +
 			# or is that invalid polish notation? It's been too long since I made postfixer
 			# so I'm probably overspecifying that optimization
 			eqInd += 1
 			focus = postfix[ eqInd ]
 
+	def assignExpression( self, symTargetIndex, expression ) :
+		decrypted = postFixer.convertToPostFix( expression, False ) # self.verbose
+		SCompiler.evaluatePostFix( self, decrypted ) 	# postfix's verbose is dense
+		# answer left in the acc, store into x
+		self.smlData[ self.instructionCounter ] = SCompiler.STORE + \
+				self.symbolTable[ symTargetIndex ].location
+	
+	def naiveAssignment( self, symTargetIndex, symbOfNewVal ) :
+		# if x = x, do nothing; but that's a little paranoid
+		indexofNew = SCompiler.getSymbolIndex( self, symbOfNewVal, \
+			SCompiler.getType( self, symbOfNewVal ), SCompiler.RESERVE )
+		SCompiler.loadInAcc( self, self.symbolTable[ indexofNew ].location )
+		self.smlData[ self.instructionCounter ] = SCompiler.STORE + \
+				self.symbolTable[ symTargetIndex ].location
+	
 	def assignment( self, restOfLine ) :
 		'form of let x = ( y + 2 ) / 99 * z'
 		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # x =
 		# that's not consistent slicing syntax, Guido
-		print restOfLine
 		SCompiler.checkForUnexpected( self, restOfLine[ 2: ] )
 		indexFinal = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], \
 			SCompiler.VAR, SCompiler.RESERVE )
-		# convert the rest via shunting yard
-		decrypted = postFixer.convertToPostFix( restOfLine[ 2: ], False )
-		SCompiler.evaluatePostFix( self, decrypted )
-		# answer left in the acc, store into x
-		self.smlData[ self.instructionCounter ] = SCompiler.STORE + \
-			self.symbolTable[ indexFinal ].location
+		if restOfLine.__len__() == 3 and restOfLine[ 2 ].isalnum :
+			# let x = y or x = 3
+			SCompiler.naiveAssignment( self, indexFinal, restOfLine[ 2 ] )
+		else :
+			# convert the expression via shunting yard
+			SCompiler.assignExpression( self, indexFinal, restOfLine[ 2: ] )
 
 	def saveThisLinesNumber( self, lineNumber ) :
 		'save the line number in symbolTable; since increasing, dont search'
@@ -631,19 +608,21 @@ class SCompiler( object ) :
 		output = open( newFileName, 'w' )
 		output.truncate( ) # erase what's in there for safety
 		for nn in self.smlData :
-			output.write( str( nn ) + '\n' ) # consider using same technique as Ram.coreDump
+			output.write( str( nn ) + '\n' ) # consider outputting as a grid, as in showMem()?
 		output.close( )
 		return newFileName
 
 	def secondPass( self, originalFileName ) :
 		'resolve goto statements, print to x.sml return that filename'
-		SCompiler.showState( self )
+		if self.verbose :
+			SCompiler.showState( self )
 		SCompiler.resolveForwardReferencedLines( self )
 		return SCompiler.saveProgram( self, originalFileName )
 
-	def compile( self, simpleFile ) :
+	def compile( self, simpleFile, verboseMode ) :
 		'compiles or reports syntaxError, returns name of new sml file to run'
 		simpleProgram = open( simpleFile )
+		self.verbose = verboseMode
 		for line in simpleProgram :
 			SCompiler.firstPass( self, line.rstrip( '\n' ) )
 		simpleProgram.close( )
@@ -665,14 +644,15 @@ class SCompiler( object ) :
 	# added sentinel to guard against array overflow during optimization
 
 '''	OUTPUT
+C: ... >python testCompiler.py monkey.txt -v
         using monkey.txt
 
         Forward referenced lines:
-line called 9 referenced by instruction in mem 3
-line called 10 referenced by instruction in mem 6
+line called 9 referenced by instruction in mem 2
+line called 33 referenced by instruction in mem 6
 
-        Contents of Symbol Table        index - 15
- sym     type    location
+        Contents of Symbol Table        index - 13
+sym     type            location
  1       line num        0
  2       line num        0
  3       line num        0
@@ -680,68 +660,41 @@ line called 10 referenced by instruction in mem 6
  6       line num        1
  x       variable        28
  7       line num        2
- 9       line num        4
+ 9       line num        3
  3       const num       27
  1       const num       26
  10      line num        7
- 5       const num       25
- 11      line num        9
- y       variable        24
- 6       const num       23
- 53      line num        14
+ y       variable        25
+ 33      line num        16
+ 53      line num        17
 
-Instr count - 14        Data counter - 22
+Instr count - 17        Data counter - 23
         Contents of sml data bank
         0       1       2       3       4
-        1129    1028    0000    3000    4027
-5       2126    3100    4025    4128    4023
-10      2025    4122    4022    4124    0000
-15      0000    0000    0000    0000    0000
-20      0000    0000    0000    0006    0000
-25      0005    0001    0003    0000    0005    done
-paused so you can fix monkey.sml so it looks at 3 instead of 2d
-	[simpletron output]
+ 0       1129    1028    4000    2027    3126
+ 5       3126    4200    2027    2029    3025
+ 10      2124    2028    3124    2123    3323
+ 15      2128    1128    4300    0000    0000
+ 20      0000    0000    0000    0000    0000
+ 25      0000    0001    0003    0000    0005    done
+
+Run sml file? y/n -- y
  print to terminal:  5
- wait for terminal input
- -- 4
- print... // changed this during pause, used to be "0"
- naive goto ptr to 4
+ wait for terminal input  -- 4
+ naive goto ptr to 3
  load Acc with 3 from 27
  subtract (acc) 3 and 1
- if Acc (2) is zero, goto 7
- load Acc with 5 from 25
- save acc, 5, into 28
- load Acc with 6 from 23
- add (acc) 6 and 5
- save acc, 11, into 22
- load Acc with 11 from 22
- save acc, 11, into 24
- Halt program
-
-[monkey prettified]
- 0 print from 29
- 1 input to 28
- 2 ..0
- 3 goto 4
- 4 load acc from 27
- 5 - - acc & from 26
- 6 if acc Negative goto 7
- 7 load acc from 25
- 8 store acc into 28
- 9 load acc from 23
- 10 ++ acc & from 25
- 11 store acc into 22
- 12 load acc from 22
- 13 store acc into 24
-
-[monkey in simple]
- 1 rem monkey wrench program, not designed to be run on simpletron
- 2 rem
- 3 print 5
- 6 input x
- 7 goto 9
- 9 if 3 == 1 goto 10
- 10 let x = 5
- 11 let y = 6 + 5
- 53 end
+ subtract (acc) 2 and 1
+ if Acc (1) is zero, goto 16
+ load Acc with 3 from 27
+ load Acc with 5 from 29
+ add (acc) 5 and 0
+ save Acc (5) into 24
+ load Acc with 4 from 28
+ subtract (acc) 4 and 5
+ save Acc (-1) into 23
+ multiply (acc) -1 and -1
+ save Acc (1) into 28
+ print to terminal:  1
+Halt program
 '''

@@ -54,15 +54,15 @@ class Cpu( object ) :
 		elif operation == Cpu.STORE :
 			print " save Acc (%d) into %d" % ( self.acc, self.opAddr )
 		elif operation == Cpu.ADD :
-			print " add (acc) %d and %d" % ( self.acc, self.opVal )
+			print " add acc (%d) and %d from %d" % ( self.acc, self.opVal, self.opAddr )
 		elif operation == Cpu.SUBTRACT :
-			print " subtract (acc) %d and %d" % ( self.acc, self.opVal )
+			print " subtract (acc) %d and %d from %d" % ( self.acc, self.opVal, self.opAddr )
 		elif operation == Cpu.MULTIPLY :
-			print " multiply (acc) %d and %d" % ( self.acc, self.opVal )
+			print " multiply acc (%d) and %d from %d" % ( self.acc, self.opVal, self.opAddr )
 		elif operation == Cpu.DIVIDE :
-			print " divide (acc) %d by %d" % ( self.acc, self.opVal )
+			print " divide acc (%d) by %d from %d" % ( self.acc, self.opVal, self.opAddr )
 		elif operation == Cpu.MODULUS :
-			print " modulus (acc) %d by %d" % ( self.acc, self.opVal )
+			print " modulus acc (%d) by %d from %d" % ( self.acc, self.opVal, self.opAddr )
 		elif operation == Cpu.BRANCH :
 			print " naive goto ptr to %d" % ( self.opAddr )
 		elif operation == Cpu.BRANCHZERO :

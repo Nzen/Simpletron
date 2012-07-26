@@ -58,7 +58,7 @@ def convertSilently( infix ) :
 	return postFix
 
 def convertVerbosely( infixString ) :
-	' I didn"t want to muddy the program with 1000 checks if in Debug_Mode '
+	' blow by blow. also this operates on a string, not a list like silently does '
 	operators = { "(": 0, "/": 3, "*": 3, "+": 2, "-": 2, "%" : 4 }
 	opStack = stack.Stack( )
 	infix = infixString.split( ' ' )
@@ -72,7 +72,7 @@ def convertVerbosely( infixString ) :
 	
 	while ( bound > ind ) :
 		char = infix[ ind ]
-		print "char is %s" % char
+		print "char is %s " % char,
 		if char.isdigit( ) :
 			print "  is digit"
 			postFix.append( char )
@@ -96,13 +96,13 @@ def convertVerbosely( infixString ) :
 		else :
 			print "um, what is %s?" % char
 		ind += 1
-		print "ind is %d\n" % ind
-		print "postfix : %s" % postFix
+		#print "ind is %d\n" % ind
 	while opStack.notEmpty( ) :
 		if opStack.peek( ) is not "(" :
 			postFix.append ( opStack.pop( ) )
 		else :
 			opStack.pop( )
+	print "postfix : %s" % postFix # I assume only wanting to see the final result
 	return postFix
 
 def convertToPostFix( infixString, verbose ) :
@@ -110,7 +110,6 @@ def convertToPostFix( infixString, verbose ) :
 		return convertVerbosely( infixString )
 	else :
 		return convertSilently( infixString )
-
 
 '''
 	Dijkstra's algorithm. Yeah, I thought theirs was a little underexplained

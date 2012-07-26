@@ -33,7 +33,7 @@ def run( file ) :
 	#testCpu( ssd )
 	cmd.run( )
 
-verbose = True
+verbose = False # I've changed testCompiler to alter this
 #run( argv[ 1 ] ) # uncomment here & line 7 to test cpu explicitly
 '''
 	Bad examples of using exec( ):
