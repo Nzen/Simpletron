@@ -1,6 +1,6 @@
 
 # Nicholas Prado
-# Might as well practice testing
+# Use: python testCompiler.py [file] [-v]
 
 import compiler
 import smlDisassemb

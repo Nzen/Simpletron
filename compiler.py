@@ -4,16 +4,14 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
-testCompiler has optional arg -v after the file name to make it verbose.
-	if that's tedious during testing, I'll flip it to -s for silent
-resolved naive let; extracted both types
-testPost back in main; when uncommented, is verbose flag sensitive
-	postF less spam from verb
 >> fix order sensitive operations working
+>> replace orEquals() with a decremented target, not subtraction
 
 	Remaining tasks
->> replace orEquals() with a decremented target, not subtraction
+
 >> refactor checkForUnexpected()
+>> fix readme
+>> eliminate premature prepInstruction() from firstPass, make each opCode emission handle self only
 > consider saving program as a grid? means changing disassembler and comp
 > rename comp to testCpu?
 > consider making heirarchal table of functions, this is ugly to look through
@@ -52,8 +50,8 @@ class SCompiler( object ) :
 	DIVIDE = 3300
 	MODULUS = 3400
 	BRANCH  = 4000
-	BRANCHZERO = 4100
-	BRANCHNEG = 4200
+	BRANCHNEG = 4100
+	BRANCHZERO = 4200
 	HALT  = 4300 # Matches spec, but cpu thinks 0 also is stop, as per Warford
 	RAMSIZE = 100 # so bad accesses halt safely rather than fail_coreDump()
 	#
@@ -188,7 +186,8 @@ class SCompiler( object ) :
 		self.currSym += 1
 		symInd = self.currSym
 		self.symbolTable[ symInd ].type = theType
-		self.symbolTable[ symInd ].symbol = symb # int( symb ) if symb.isdigit( ) else // Doing it elsewhere? watch for bugs
+		self.symbolTable[ symInd ].symbol = symb 
+		# maybe int( symb ) if symb.isdigit( ) else // Doing it elsewhere? watch for bugs
 		if theType != SCompiler.LINE :
 			SCompiler.prepDataLocation( self )
 			self.symbolTable[ symInd ].location = self.dataCounter
@@ -217,7 +216,8 @@ class SCompiler( object ) :
 			self.symbolTable[ self.currSym ].location = 0
 		# but the first time IC is -1 rather than 0, so leaving it thus would underflow
 		# if a goto pointed at it. I'd like to optimize this into a single check but not now.
-		pass # this pass & similars are because notepad++ doesn't fold the comments below a function
+		# this pass & similars are because notepad++ doesn't fold the comments below a function
+		pass
 
 	def finished( self, restOfLine ) :
 		"# halt"
@@ -226,7 +226,8 @@ class SCompiler( object ) :
 	def userInput( self, restOfLine ) :
 		"# input x (meaning) store input in var x"
 		if restOfLine[ 0 ].isdigit( ) :
-			SCompiler.syntaxError( self, "Simple will not use numbers (" + restOfLine[ 0 ] + ") as variable names" )
+			SCompiler.syntaxError( self, "Simple will not use numbers (" 
+					       + restOfLine[ 0 ] + ") as variable names" )
 		whereInd = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
 		self.smlData[ self.instructionCounter ] = SCompiler.READ + self.symbolTable[ whereInd ].location
 
@@ -262,7 +263,8 @@ class SCompiler( object ) :
 		"#1 goto #2"
 		lineTarget = restOfLine[ 0 ]
 		if not lineTarget.isdigit( ) :
-			SCompiler.syntaxError( self, "can't jump to variable " + lineTarget + ", only to int line numbers" )
+			SCompiler.syntaxError( self, "can't jump to variable " +
+					       lineTarget + ", only to int line numbers" )
 		whereIndex = SCompiler.getSymbolIndex( self, lineTarget, SCompiler.LINE, not SCompiler.RESERVE )
 		SCompiler.goto( self, SCompiler.BRANCH, whereIndex, \
 				SCompiler.symbFound( self, whereIndex ), lineTarget )
@@ -275,6 +277,26 @@ class SCompiler( object ) :
 		SCompiler.prepInstruction( self )
 		self.smlData[ self.instructionCounter ] = SCompiler.SUBTRACT + self.symbolTable[ indOfOne ].location
 
+	def resolveUndecrementedVariable( self, index ) :
+		'if I just reserved it, then it will be 0; else, trouble: simpletron has to decrement'
+		if index == currentSymbol :
+			location = SCompiler.symbolTable[ index ].location
+			smlData[ location ] -= 1
+		else :
+			# already used, runtime decrement requires simpletron instructions
+			# use simulateOrEquals()? maybe
+			pass # for now
+
+	def saveDecrementedSymbol( self, symbol ) :
+		symType = SCompiler.getType( self, symbol )
+		if symType == SCompiler.VAR :
+			index = SCompiler.getSymbolIndex( self, symbol, symType, SCompiler.RESERVE )
+			Scompiler.resolveUndecrementVariable( self, index )
+			return index
+		else : # const
+			newSym = int( symbol )
+			return SCompiler.getSymbolIndex( self, newSym - 1, symType, SCompiler.RESERVE )
+
 	def conditionalProduction( self, firstInd, secondInd, orEqual ) :
 		'loads first, subtracts second; IF orEqualTo subtracts one more, so GO_NEG works'
 		# save: load first to acc
@@ -285,11 +307,13 @@ class SCompiler( object ) :
 		self.smlData[ self.instructionCounter ] = SCompiler.SUBTRACT + \
 				self.symbolTable[ secondInd ].location
 		if orEqual :
-			SCompiler.simulateOrEquals( self )
+			targetToDecrement = self.symbolTable[ secondInd ].location
+			self.smlData[ targetToDecrement ]
 
 	def validateIfgotoExpression( self, expression ) :
 		'x > y goto #'
 		conditionals = ( "==", ">=", "<=", ">", "<" )
+		# If I ever evaluate an expression, these indecies break
 		numSymb = len( expression )
 		if numSymb < 5 :
 			SCompiler.syntaxError( self, "Not enough symbols in the 'if goto' command" )
@@ -335,7 +359,10 @@ class SCompiler( object ) :
 		SCompiler.validateIfgotoExpression( self, restOfLine )
 		whereX = SCompiler.saveNonLine( self, restOfLine[ 0 ] )
 		comparison = restOfLine[ 1 ]
-		whereY = SCompiler.saveNonLine( self, restOfLine[ 2 ] )
+		if comparison == ">=" or comparison == "<=" : # think of something more elegant
+			whereY = SCompiler.saveDecrementedSymbol( self, restOfLine[ 2 ] )
+		else :
+			whereY = SCompiler.saveNonLine( self, restOfLine[ 2 ] )
 		target = restOfLine[ 4 ]
 		# resolve conditional expression
 		if comparison == "==" :
@@ -461,7 +488,7 @@ class SCompiler( object ) :
 			# sin, will tempVals retain the change? I forget. python.
 		return saveOver
 
-'''def evaluate( yVal, operator, xVal ) :
+	'''def evaluate( yVal, operator, xVal ) :
 	if '+' is operator :
 		return yVal ) + xVal )
 	elif '-' is operator :
@@ -476,7 +503,7 @@ class SCompiler( object ) :
 		print "  Unknown operator, undefined behavior mode activated"
 		return yVal
 
-def evaluatePostfix( postfix ) :
+	def evaluatePostfix( postfix ) :
 	' evaluates a postfix expression, I"m assuming the client sends a list of strings '
 	while ">" != focus :
 		if focus.isdigit( ) :
