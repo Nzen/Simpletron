@@ -91,10 +91,14 @@ def test_programTooBig( compiler ) : # review 12 2 8
 compiler.SCompiler.RAMSIZE = 30 # comment out for full size ram
 simple = compiler.SCompiler( )
 verbose = False
-if argv.__len__() > 2 :
-	if argv[ 2 ] == '-v' :
-		verbose = True
-file = argv[ 1 ]
+try :
+	if argv.__len__() > 2 :
+		if argv[ 2 ] == '-v' :
+			verbose = True
+	file = argv[ 1 ]
+except IndexError:
+	print "you forgot the fileName argument"
+	exit( 0 )
 print "\tusing %s" % file
 smlName = simple.compile( file, verbose )
 #compiler.SCompiler.TESTING = True
