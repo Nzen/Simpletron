@@ -76,35 +76,29 @@ and then use "comp.py [filename]".
 To test the compiler use "testCompiler.py [filename]". It will ask whether you want
 to run the file; any answer with y in it will run the .sml file through simpletron.
 Simpletron is currently set to verbose in comp, flip it to only see terminal & input.
+To test the postfixer (shuntyard/reverse polish expression), the instructions are
+in testPost. It has an important warning within.
 
 == YET TODO ==
 
-The first adaptation fixes the inflexible load store on every temp value in a let
-production. I have the pseudo-code, but I need to confirm that I pull two values and
-write an applyOperation() in compiler. Then I'll proceed to implement some of the
-advanced features suggested afterward (strings, subroutines, for loop and arrays).
+Gosub & return productions. Implementing scope and arguments is outside my current interest.
 
-The subroutines are ambiguously defined. Deitel suggests defining them with gosub
-(to initiate the jump) and return (to end the call). The trick involves whether that
-means there is only one function per program, if it is Basiesque in the sense that
-their gosub would specify a line number, or require a label to the start of the
-description. I am heavily inclined to implement the former. I'm also a bit concerned
-about shifting the return goto safely. Arguments & scope are harder still.
+For loops were more complicated than I thought. These and gosub really warrant a
+pass to themselves for simplification, but I'll get by with a stack. These also
+make me cringe at how monolithic the compiler is.
 
-For loops are dead simple. I could add a while, but basic also used if-goto instead.
-
-Inclined to add an index register, mainly for the packed string suggested, but also
-for int arrays. (So it is only one access rather than two to get the value, because
-this implementation is all about efficiency.) This would sound a total death knell
-for the disassembler since the memory cells will hold two chars and the first is the
-string's length.
+Inclined to add an index register to cpu, mainly for the packed string suggested,
+but also for int arrays. (So it is only one access rather than two to get the
+value, because this implementation is all about efficiency.) This would sound a
+total death knell for the disassembler since the memory cells will hold two chars
+and the first is the string's length.
 
 Of course, if I compile to assembly rather than sml decimal, then there's no need for
-a disassembler to xplain what the sml means. It will simply take care in flagging
+a disassembler to explain what the sml means. It will simply take care in flagging
 the symbols and such in a clear manner. I'll branch when I do that, so as to not
 muddy the standard version. If I decide to kludge an interpreter hybrid of the
 compiler and simpletron, then that will also be on a different branch.
 
 After that, the only thing remaining is to enliterate the program. I admit that
 the literate programs wiki may not like it as it is outside of their canonical scope
-but at least it will be here.
+but at least it will be here. I will wait until it is more stable though.
