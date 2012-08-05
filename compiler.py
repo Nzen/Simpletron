@@ -4,8 +4,6 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
->> fix order sensitive operations working
->> replace orEquals() with a decremented target, not subtraction
 
 	Remaining tasks
 
@@ -46,8 +44,8 @@ class SCompiler( object ) :
 	STORE = 2100
 	ADD = 3000
 	SUBTRACT = 3100
-	MULTIPLY = 3200
-	DIVIDE = 3300
+	DIVIDE = 3200
+	MULTIPLY = 3300
 	MODULUS = 3400
 	BRANCH  = 4000
 	BRANCHNEG = 4100
@@ -464,106 +462,65 @@ class SCompiler( object ) :
 		else :
 			pass # assert: unreachable
 
-	def resolveAcc( self, stack, next, afterNext ) : # fix
-		'Optimization: do I store or leave value in acc? returns firstValStored'
-		saveOver = True
-		if SCompiler.isOperator( self, next ) : ## ? x 5 + _
-			if SCompiler.orderSensitive( self, next ) : ## 5 x 5 + /
-				saveOver = True
-				memLocation = SCompiler.storeAcc( self )
-				stack.push( memLocation ) # garbage collect as next optimization
-			else :								## ? x 5 + +
-				saveOver = False # mixing metaphores here as first is actually stored
-		elif SCompiler.isOperator( self, afterNext ) : # ? x 5 + ? _
-			if SCompiler.orderSensitive( self, afterNext ) :
-				saveOver = True
-				memLocation = SCompiler.storeAcc( self ) ## 5 x 5 + /
-				stack.push( memLocation )
-			else :								## ? x 5 + ? *
-				saveOver = False # save next, then apply
-		else : # ? x 5 + ? x ; these are separate expressions, joined later
-			saveOver = False
-			memLocation = SCompiler.storeAcc( self )
-			stack.push( memLocation )
-			# sin, will tempVals retain the change? I forget. python.
-		return saveOver
-
-	'''def evaluate( yVal, operator, xVal ) :
-	if '+' is operator :
-		return yVal ) + xVal )
-	elif '-' is operator :
-		return yVal ) - xVal )
-	elif '*' is operator :
-		return yVal ) * xVal )
-	elif '/' is operator :
-		return yVal ) / float( xVal )
-	elif '%' is operator :
-		return yVal ) % float( xVal )
-	else :
-		print "  Unknown operator, undefined behavior mode activated"
-		return yVal
-
-	def evaluatePostfix( postfix ) :
-	' evaluates a postfix expression, I"m assuming the client sends a list of strings '
-	while ">" != focus :
-		if focus.isdigit( ) :
-			tempVals.push( focus )
-		elif isOperator( operators, focus ) :
-			x = tempVals.pop( )
-			y = tempVals.pop( )
-			tempVals.push( evaluate( y, focus, x ) )
-			tempVals.printStack( )
-		index += 1
-		focus = postfix[ index ]
-	return tempVals.pop( )'''
+	def nextExprNotNeedAcc( self, symbAA, symbZZ ) :
+		if not SCompiler.isOperator( self, symbAA ) :
+			if not SCompiler.isOperator( self, symbZZ ) :
+				return False # separate equation
+			else :
+				return True # aa about to apply on acc
+		else :
+			return False # store for later use
 
 	def evaluatePostFix( self, postfix ) :
-		'convert polish equation to SML instructions & mem reservations '
 		tempVals = stack.Stack( )
 		eqInd = 0
 		x = 0
 		y = 0
-		peek = 0
+		peek = 0 # rename
 		memLocation = 0
-		firstValStored = False # only applies to explicit vals, not temps
-		postfix.append( ">" ) # sentinel
+		accReady = False
+		postfix.append( "sentinel" )
 		focus = postfix[ eqInd ]
-		while '>' != focus :
+		while True : # focus != "sentinel"
 			if not SCompiler.isOperator( self, focus ) :
 				if focus.isdigit( ) :
 					memLocation = SCompiler.saveVal( self, int( focus ), SCompiler.CONST )
 				elif focus.isalpha( ) :
 					memLocation = SCompiler.saveVal( self, focus, SCompiler.VAR )
 				# else handle an array lookup aRR[x] or array Length: aRR.len or str.len
-				if not firstValStored :
-					tempVals.push( memLocation )
-					firstValStored = True
+				if accReady :
+					tempVals.push( memLocation ) # of second
 				else :
 					SCompiler.loadInAcc( self, memLocation )
-			else : # operator
+					accReady = True
+			else : # is operator; apply
 				memLocation = tempVals.pop()
+				if not accReady :
+					peek = tempVals.pop() # expression resolved earlier
+					SCompiler.loadInAcc( self, peek )
+				# ie 5 5 + 6 6 + _; you need to bring up that one
 				SCompiler.applyOperation( self, focus, memLocation )
-				if eqInd + 2 == postfix.__len__( ) : # ie next is sentinel
+				if postfix[ eqInd + 1 ] == "sentinel" : # I'd prefer to have this in while, but
 					break
-				else :
-					firstValStored = SCompiler.resolveAcc( self, \
-					tempVals, postfix[ eqInd + 1 ], postfix[ eqInd + 2 ] )
-			# does firstValStored stand up to multiple expressions?
-				# I keep thinking 5 8 6 4 + + +, but only seen 3 4 + 5 + 6 7 + +
-			# or is that invalid polish notation? It's been too long since I made postfixer
-			# so I'm probably overspecifying that optimization
+				if SCompiler.nextExprNotNeedAcc( self, postfix[ 1 ], postfix[ 2 ] ) :
+					memLocation = SCompiler.storeAcc( self )
+					tempVals.push( memLocation )
+					accReady = False
+				# wait a minute, if I have to save separate equations to apply on one another 5+5 / 6+6
 			eqInd += 1
 			focus = postfix[ eqInd ]
 
 	def assignExpression( self, symTargetIndex, expression ) :
-		decrypted = postFixer.convertToPostFix( expression, False ) # self.verbose
-		SCompiler.evaluatePostFix( self, decrypted ) 	# postfix's verbose is dense
+		decrypted = postFixer.convertToPostFix( expression, False ) # no verbose: it is garrulous
+		if self.verbose :
+			print decrypted
+		SCompiler.evaluatePostFix( self, decrypted )
 		# answer left in the acc, store into x
 		self.smlData[ self.instructionCounter ] = SCompiler.STORE + \
 				self.symbolTable[ symTargetIndex ].location
 	
 	def naiveAssignment( self, symTargetIndex, symbOfNewVal ) :
-		# if x = x, do nothing; but that's a little paranoid
+		'if let x = y, then just load y & save in x, no need for postfixer'
 		indexofNew = SCompiler.getSymbolIndex( self, symbOfNewVal, \
 			SCompiler.getType( self, symbOfNewVal ), SCompiler.RESERVE )
 		SCompiler.loadInAcc( self, self.symbolTable[ indexofNew ].location )
@@ -590,6 +547,7 @@ class SCompiler( object ) :
 			SCompiler.syntaxError( self, "First symbol must be a line number" )
 		SCompiler.checkLineNumbersIncreasing( self, int( lineNumber ) )
 		SCompiler.getSymbolIndex( self, int( lineNumber ), SCompiler.LINE, SCompiler.RESERVE ) # just reserving
+		# saves instrucCounter directly so it's harder to save
 	
 	def firstPass( self, line ) :
 		'validate/prep lineNum, prep next Instruction, call command( )'
@@ -597,7 +555,7 @@ class SCompiler( object ) :
 		lineNumber = segment[ 0 ]
 		comm = segment[ 1 ]
 		SCompiler.validateCommandType( self, comm )
-		SCompiler.prepInstruction( self )
+		SCompiler.prepInstruction( self ) # this line's going, let each instruction prepare itself or is it for saveL#()?
 		SCompiler.saveThisLinesNumber( self, lineNumber )
 		newInstruc = SCompiler.commandList[ comm ] # string of the function name
 		newInstruc( self, segment[ 2: ] ) # cut line number & command, send restOfLine
@@ -613,7 +571,7 @@ class SCompiler( object ) :
 
 	def resolveForwardReferencedLines( self ) :
 		'lineFlags are initialized to -1; forward references contain lineNumber (ie symbol) pointed at'
-		# Resolves self.lineFlags[ self.instructionCounter ] = int( self.symbolTable[ lineNumIndex ].symbol ) from goto()
+		# Resolves lineFlags[ instructionCounter ] = int( symbolTable[ lineNumIndex ].symbol ) from SC.goto()
 		ind = 0
 		limit = self.lineFlags.__len__( )
 		while ind < limit :
@@ -651,9 +609,11 @@ class SCompiler( object ) :
 		simpleProgram = open( simpleFile )
 		self.verbose = verboseMode
 		for line in simpleProgram :
+			if self.verbose :
+				print line,
 			SCompiler.firstPass( self, line.rstrip( '\n' ) )
 		simpleProgram.close( )
-		#
+		print
 		newFile =  SCompiler.secondPass( self, simpleFile )
 		print "done"
 		return newFile

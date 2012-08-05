@@ -1,10 +1,13 @@
 2028
-2129
+3127
+2126
+2025
+3024
+2123
 2026
-3129
-2127
+3323
+2129
 1129
-1127
 0
 0
 0
@@ -19,26 +22,23 @@
 0
 0
 0
-0
-0
-0
-0
+4
+3
 0
 2
-0
 1
 0
 ##
 0 load acc from 28
-1 store acc into 29
-2 load acc from 26
-3 - - acc & from 29
-4 store acc into 27
-5 print from 29
-6 print from 27
-7 ..0
-8 ..0
-9 ..0
+1 - - acc & from 27
+2 store acc into 26
+3 load acc from 25
+4 ++ acc & from 24
+5 store acc into 23
+6 load acc from 26
+7 / / acc & from 23
+8 store acc into 29
+9 print from 29
 10 ..0
 11 ..0
 12 ..0
@@ -53,9 +53,9 @@
 21 ..0
 22 ..0
 23 ..0
-24 ..0
-25 ..0
-26 ..2
-27 ..0
+24 ..4
+25 ..3
+26 ..0
+27 ..2
 28 ..1
 29 ..0
