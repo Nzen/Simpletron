@@ -2,7 +2,8 @@
 # testing postFixer and postFixEval
 #( 6 + 2 ) * 5 - 8 / 4 ==>> 6 2 + 5 * 8 4 / - ==>> 38
 # to test, uncomment lines 8, 11-13, 23, 24
-	#// be aware, must stop fixing before it evaluates
+	# be aware, convert silent operates on lists, verbose converts a string
+	# so evaluate the appropriate conversion
 
 import postFixer
 import postFixEval

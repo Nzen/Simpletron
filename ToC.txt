@@ -1,0 +1,94 @@
+class SCompiler( object ) :
+
+READ, WRITE, LOAD, STORE, ADD, SUBTRACT, DIVIDE, MULTIPLY, MODULUS, BRANCH, BRANCHNEG, BRANCHZERO, HALT
+RAMSIZE
+#
+LINE, VAR, CONST, ARRAY, FUNCT, PHRASE
+RESERVE
+TESTING
+FAILED
+
+def __init__( self ) :
+self.symbolTable
+self.lineFlags
+self.smlData
+self.instructionCounter
+self.dataCounter
+self.currSym
+self.lastLine
+self.verbose
+self.loops = stack.Stack()
+
+
+def showSymbolTable( self ) :
+def showInterestingLineFlags( self ) :
+def showMem( self ) :
+def showState( self ) :
+
+def syntaxError( self, why ) :
+
+def checkLineNumbersIncreasing( self, newLineNumber ) :
+def validateCommandType( self, word ) :
+def programTooBig( self ) :
+
+def prepInstruction( self ) :
+def prepDataLocation( self ) :
+
+def getSymbolIndex( self, sought, typeSought, reserve ) :
+def reserveNewSymbol( self, symb, theType ) :
+def getType( self, unknown ) : # needs more complex later
+
+def comment( self, restOfLine ) :
+
+def finished( self, restOfLine ) :
+
+def userInput( self, restOfLine ) :
+
+def saveNonLine( self, symbol ) :
+
+def screenOutput( self, restOfLine ) :
+
+def goto( self, opType, lineNumIndex, lineNumDefined, numIfNot ) :
+def symbFound( self, index ) :
+def branch( self, restOfLine ) :
+?? 	def simulateOrEquals( self ) : # REPLACE
+def resolveUndecrementedVariable( self, index ) :
+def saveDecrementedSymbol( self, symbol ) :
+def conditionalProduction( self, firstInd, secondInd, orEqual ) :
+def validateIfgotoExpression( self, expression ) :
+def relationConditional( self, whereX, whereY, comparison, lineNumSymb ) :
+def equalityConditional( self, whereX, whereY, comparison, lineNumSymb ) :
+def conditional( self, restOfLine ) :
+
+def checkFirstTwoChars( self, varNequal ) :
+def isOperator( self, char ) :
+def checkForUnexpected( self, expression ) : # refactor to less magic numbers
+def checkDenominator( self, whereDenominator ) :
+def orderSensitive( self, mathOperator ) :
+def saveVal( self, symb, type ) :
+def saveTempVal( self ) :
+def loadInAcc( self, memLocation ) :
+def storeAcc( self ) :
+def performOperation( self, opCode, memLocation ) :
+def applyOperation( self, operator, memLocation ) :
+def nextExprNotNeedAcc( self, symbAA, symbZZ ) :
+def evaluatePostFix( self, postfix ) :
+def assignExpression( self, symTargetIndex, expression ) :
+def naiveAssignment( self, symTargetIndex, symbOfNewVal ) :
+def assignment( self, restOfLine ) :
+
+def checkForExprSyntax( self, expr ) :
+def addImplicitStep( restOfLine ) :
+def beginFor( self, restOfLine ) :
+
+def endFor( self, restOfLine ) :
+
+def saveThisLinesNumber( self, lineNumber ) :
+def firstPass( self, line ) :
+
+def syntaxErrorSecondPass( self, why ) :
+def resolveForwardReferencedLines( self ) :
+def saveProgram( self, originalFileName ) :
+def secondPass( self, originalFileName ) :
+
+def compile( self, simpleFile, verboseMode ) :

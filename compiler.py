@@ -4,11 +4,14 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
+updated readme grammer to wirth's Ebnf & updated yet todo.
+>> decided forloop
+>  retyped pseudocode
 
 	Remaining tasks
 
 >> refactor checkForUnexpected()
->> fix readme
+>> print decrypted (from postfix) more nicely(); print disassembler when verbose?
 >> eliminate premature prepInstruction() from firstPass, make each opCode emission handle self only
 > consider saving program as a grid? means changing disassembler and comp
 > rename comp to testCpu?
@@ -65,15 +68,15 @@ class SCompiler( object ) :
 
 	def __init__( self ) :
 		self.symbolTable = [ TableEntry( ) for i in range( SCompiler.RAMSIZE ) ]
-		# consider appending to symbol table rather than using an index?
 		self.lineFlags = [ -1 ] * SCompiler.RAMSIZE
-		# notes which fail, only because of spec else I'd append to a tuple or dict
+		# notes which fail, only because of spec else I'd append to a list or dict
 		self.smlData = [ 0 ] * SCompiler.RAMSIZE # floods ram later
 		self.instructionCounter = -1
 		self.dataCounter = SCompiler.RAMSIZE # sc.RS - 1? 12 3 18
 		self.currSym = -1 # index in symbol table of latest
 		self.lastLine = -1 # for checkLineNumIncreasing
 		self.verbose = False
+		self.loops = stack.Stack()
 
 	def showSymbolTable( self ) :
 		print "\n\tContents of Symbol Table\tindex - " + str( self.currSym )
@@ -451,11 +454,7 @@ class SCompiler( object ) :
 		elif '*' == operator :
 			SCompiler. performOperation( self, SCompiler.MULTIPLY, memLocation )
 		elif '/' == operator :
-			#SCompiler.checkDenominator( self, memLocation ) # um, not always?
-			# sin, I hate to not check but this just became past my available time to resolve
-			# make sure that this is checking the denominator
-			# because it said n = 5 * y - 0 / x is a const in the denominator
-			## problem, this IS treating 0 as the denominator, am I applying it backwards?
+			SCompiler.checkDenominator( self, memLocation )
 			SCompiler. performOperation( self, SCompiler.DIVIDE, memLocation )
 		elif '%' == operator :
 			SCompiler. performOperation( self, SCompiler.MODULUS, memLocation )
@@ -529,9 +528,9 @@ class SCompiler( object ) :
 	
 	def assignment( self, restOfLine ) :
 		'form of let x = ( y + 2 ) / 99 * z'
-		SCompiler.checkFirstTwoChars( self, restOfLine[ :2 ] ) # x =
-		# that's not consistent slicing syntax, Guido
-		SCompiler.checkForUnexpected( self, restOfLine[ 2: ] )
+		expressionSlice = 2
+		SCompiler.checkFirstTwoChars( self, restOfLine[ :expressionSlice ] ) # exclusive: x =
+		SCompiler.checkForUnexpected( self, restOfLine[ expressionSlice: ] ) # inclusive
 		indexFinal = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], \
 			SCompiler.VAR, SCompiler.RESERVE )
 		if restOfLine.__len__() == 3 and restOfLine[ 2 ].isalnum :
@@ -539,7 +538,68 @@ class SCompiler( object ) :
 			SCompiler.naiveAssignment( self, indexFinal, restOfLine[ 2 ] )
 		else :
 			# convert the expression via shunting yard
-			SCompiler.assignExpression( self, indexFinal, restOfLine[ 2: ] )
+			SCompiler.assignExpression( self, indexFinal, restOfLine[ expressionSlice: ] )
+
+	def checkForExprSyntax( self, expr ) :
+		'checks that the statement satisfies the expected syntax, returns whether explicit step used'
+		if expr[ 0 ].isdigit() :
+			SCompiler.syntaxError( self, "Expected variable assignment, not number " + expr[0] )
+		elif expr[ 1 ] != '=' :
+			SCompiler.syntaxError( self, "Expected '=' after assignment target, not " + expr[ 1 ] )
+		elif not expr[ 2 ].isalnum() : # correct this when I use arrays
+			SCompiler.syntaxError( self, "Expected a number or variable to assign, not " + expr[ 2 ] )
+		elif expr[ 3 ] != 'to' : # starting to get tedious, as befits a rigid syntax
+			SCompiler.syntaxError( self, "Expected 'to' after assignment expression, not " + expr[ 3 ] )
+		elif not expr[ 4 ].isalnum() :
+			SCompiler.syntaxError( self, "Expected a number or variable as loop limit, not " + expr[ 4 ] )
+		if expr.__len__() > 4 :
+			if expr[ 5 ] != 'step' :
+				SCompiler.syntaxError( self, "Expected '=' after assignment target " + expr[ 1 ] )
+			elif not expr[ 6 ].isalnum() :
+				SCompiler.syntaxError( self, "Expected a number or variable as increment, not " + expr[ 1 ] )
+			return True # explicit step
+		else :
+			return False # implicit step, add by 1s, resolves momentarily
+
+	def addImplicitStep( restOfLine ) :
+			restOfLine.append( "step" )
+			restOfLine.appent( "1" )
+			return restOfLine
+
+	def beginFor( self, restOfLine ) :
+		'for x = (init) to (limit) step (dist) ; y to z means y<=z ; no step means by 1s'
+		# check that it satisfies grammer
+		explicitStep = SCompiler.checkForExprSyntax( self, restOfLine )
+		if not explicitStep :
+			restOfLine = SCompiler.addImplicitStep( restOfLine ) # below is now "13 x"
+		self.loops.push( str( self.instructionCounter ) + " " + restOfLine[ 0 ] ) # want a more advanced entry later
+		indexOfControl = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
+		'''
+		C- save # in x in data[] // no, this is not in the right spirit. and yet...
+		C- save step value, (warn if var?)
+		S- emit goto instruction counter + 1 # to skip the next step
+		S- emit load x
+		S- emit add (step)
+		S- emit save x
+		C- save (limit) - 1 # for <= compliance with gotoNeg
+		S- emit load (limit)
+		S- emit subtract x # or is this backwards?
+		S- emit gotoNeg 00
+		C- later resolve at endFor by looking in loops[] where to add
+		'''
+		print "beginning a for loop not yet implemented"
+
+	def endFor( self, restOfLine ) :
+		'next x, where x matches for loop var'
+		"""
+		C- pop from loops[]
+		C- cleave iC from var name
+		C- if x doesn't match, error
+		S- emit goto savedInstrCount
+		C- add own instruCounter & 1 to ic + 8 (ie gotoNeg skips past on completion)
+		. . # note, that assumes at least one more instruction
+		"""
+		print "closing a for loop not yet implemented"
 
 	def saveThisLinesNumber( self, lineNumber ) :
 		'save the line number in symbolTable; since increasing, dont search'
@@ -626,6 +686,8 @@ class SCompiler( object ) :
 		"goto" : branch,
 		"input" : userInput,
 		"print" : screenOutput,
+		"for" : beginFor,
+		"next" : endFor,
 		}
 	operators = [ "/", "*", "+", "-", "%", ">", '(', ')' ]
 	# added sentinel to guard against array overflow during optimization
