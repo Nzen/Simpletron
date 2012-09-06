@@ -4,24 +4,24 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
-updated readme grammer to wirth's Ebnf & updated yet todo.
->> decided forloop
->  retyped pseudocode
 
 	Remaining tasks
 
+>> remove forloop stuff. eh, just didn't call it.
+>> prevent client from using symbols with keywords
+
+>> change forward references to vector
 >> refactor checkForUnexpected()
 >> print decrypted (from postfix) more nicely(); print disassembler when verbose?
 >> eliminate premature prepInstruction() from firstPass, make each opCode emission handle self only
 > consider saving program as a grid? means changing disassembler and comp
 > rename comp to testCpu?
-> consider making heirarchal table of functions, this is ugly to look through
 '''
 
 import postFixer
 import stack
 
-class TableEntry( object ) :
+class SymbolEntry( object ) :
 	'simple record for each element of the simple values'
 	def __init__( self ) :
 		self.symbol = ""
@@ -39,6 +39,24 @@ class TableEntry( object ) :
 			} # key literals because cpu.line, et al, not yet defined
 		return str( self.symbol ) + "\t" + types[ self.type ] + "\t" + str( self.location )
 
+'''
+class RefFlag( object ) :
+	'simple record for commands that reference other lines'
+	def __init__( self ) :
+		self.here = 0
+		self.there = 0 #?
+		self.type = 0
+
+	def __str__( self ) :
+		types = {
+			0 : "goto"
+			#1 : "loop"
+			#2 : "subroutine"
+			}
+		return types[ self.type ] + " from " + str( self.here ) + " to com @ line " + str( self.there )
+Just realized that this breaks with spec & can't be used for wiki *sadface*
+'''
+
 class SCompiler( object ) :
 
 	READ  = 1000
@@ -54,7 +72,7 @@ class SCompiler( object ) :
 	BRANCHNEG = 4100
 	BRANCHZERO = 4200
 	HALT  = 4300 # Matches spec, but cpu thinks 0 also is stop, as per Warford
-	RAMSIZE = 100 # so bad accesses halt safely rather than fail_coreDump()
+	RAMSIZE = 100 # so that bad accesses halt safely rather than provoke coreDump()
 	#
 	LINE = 0
 	VAR  = 1
@@ -64,15 +82,15 @@ class SCompiler( object ) :
 	PHRASE = 5 # haha, a string
 	RESERVE = True
 	TESTING = False
-	FAILED = False # for testing when syntaxError shouldn't exit( )
+	FAILED = False # for testing when syntaxError shouldn't close program
 
 	def __init__( self ) :
-		self.symbolTable = [ TableEntry( ) for i in range( SCompiler.RAMSIZE ) ]
+		self.symbolTable = [ SymbolEntry( ) for i in range( SCompiler.RAMSIZE ) ]
 		self.lineFlags = [ -1 ] * SCompiler.RAMSIZE
 		# notes which fail, only because of spec else I'd append to a list or dict
 		self.smlData = [ 0 ] * SCompiler.RAMSIZE # floods ram later
 		self.instructionCounter = -1
-		self.dataCounter = SCompiler.RAMSIZE # sc.RS - 1? 12 3 18
+		self.dataCounter = SCompiler.RAMSIZE
 		self.currSym = -1 # index in symbol table of latest
 		self.lastLine = -1 # for checkLineNumIncreasing
 		self.verbose = False
@@ -145,14 +163,22 @@ class SCompiler( object ) :
 		else :
 			self.lastLine = newLineNumber # for next time
 
+	def reservedWord( self, unknown ) :
+		return unknown in SCompiler.commandList
+
 	def validateCommandType( self, word ) :
 		'tests static dict for supplied'
-		if word not in SCompiler.commandList :
+		if not SCompiler.reservedWord( self, word ) :
 			SCompiler.syntaxError( self, "unrecognized command " + word )
-
+	
 	def programTooBig( self ) :
 		'instructions build down, data builds up. should the twain meet, Ram is full'
 		return self.instructionCounter >= self.dataCounter
+
+	def varCantBeKeyword( self, newVar, varType ) :
+		if varType == SCompiler.VAR :
+			if newVar in SCompiler.commandList :
+				SCompiler.syntaxError( self, newVar + " is reserved, choose another name" )
 
 	def prepInstruction( self ) :
 		'starting from 0, reserves spot, checks if instructions & data collide'
@@ -186,6 +212,7 @@ class SCompiler( object ) :
 		# consider appending to symbol table rather than using an index?
 		self.currSym += 1
 		symInd = self.currSym
+		SCompiler.varCantBeKeyword( self, symb, theType )
 		self.symbolTable[ symInd ].type = theType
 		self.symbolTable[ symInd ].symbol = symb 
 		# maybe int( symb ) if symb.isdigit( ) else // Doing it elsewhere? watch for bugs
@@ -227,8 +254,8 @@ class SCompiler( object ) :
 	def userInput( self, restOfLine ) :
 		"# input x (meaning) store input in var x"
 		if restOfLine[ 0 ].isdigit( ) :
-			SCompiler.syntaxError( self, "Simple will not use numbers (" 
-					       + restOfLine[ 0 ] + ") as variable names" )
+			SCompiler.syntaxError( self, "Number, " 
+					       + restOfLine[ 0 ] + " is not a variable name" )
 		whereInd = SCompiler.getSymbolIndex( self, restOfLine[ 0 ], SCompiler.VAR, SCompiler.RESERVE )
 		self.smlData[ self.instructionCounter ] = SCompiler.READ + self.symbolTable[ whereInd ].location
 
@@ -685,9 +712,11 @@ class SCompiler( object ) :
 		"if" : conditional,
 		"goto" : branch,
 		"input" : userInput,
-		"print" : screenOutput,
-		"for" : beginFor,
-		"next" : endFor,
+		"print" : screenOutput
+		#"for" : beginFor,
+		#"next" : endFor
+		#"gosub" : beginSub,
+		#"return" : endSub
 		}
 	operators = [ "/", "*", "+", "-", "%", ">", '(', ')' ]
 	# added sentinel to guard against array overflow during optimization

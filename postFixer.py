@@ -119,9 +119,7 @@ If the token is a function token, then push it onto the stack.
 If the token is a function argument separator (e.g., a comma):
 	Until the token at the top of the stack is a left parenthesis, pop operators off the stack onto the output queue. If no left parentheses are encountered, either the separator was misplaced or parentheses were mismatched.
 If the token is an operator, o1, then:
-	while there is an operator token, o2, at the top of the stack, and
-	- either o1 is left-associative and its precedence is less than or equal to that of o2,
-			or o1 is right-associative and its precedence is less than that of o2,	NOTE he's referrring to the exponentiation operator
+	while there is an operator token, o2, at the top of the stack, and o1's precedence is less than or equal to that of o2
 		pop o2 off the stack, onto the output queue;
 	push o1 onto the stack.
 If the token is a left parenthesis, then push it onto the stack.
