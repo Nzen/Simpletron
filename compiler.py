@@ -4,8 +4,10 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
+made deitel version of the driver for hand loaded input
 
 	Remaining tasks
+change ram functions & dependents from camel case
 
 >> remove forloop stuff. eh, just didn't call it.
 >> prevent client from using symbols with keywords
@@ -676,7 +678,7 @@ class SCompiler( object ) :
 
 	def saveProgram( self, originalFileName ) :
 		'write to filename.sml # return that name'
-		newFileName = originalFileName[ : -3 ] + "sml" # replaces .txt or similar
+		newFileName = originalFileName[ : -3 ] + "asm" # replaces .txt or similar
 		output = open( newFileName, 'w' )
 		output.truncate( ) # erase what's in there for safety
 		for nn in self.smlData :
