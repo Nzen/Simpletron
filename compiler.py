@@ -4,7 +4,8 @@
 # Compiler/assembler for Deitel's Simple language into SML for the Simpletron
 
 '''	todays notes
-made deitel version of the driver for hand loaded input
+simplified range() call in showMem
+simplified Type constants with range() instead of explicit
 
 	Remaining tasks
 change ram functions & dependents from camel case
@@ -60,7 +61,7 @@ Just realized that this breaks with spec & can't be used for wiki *sadface*
 '''
 
 class SCompiler( object ) :
-
+	'converts simple lang program file into sml opcode file for use with simpletron'
 	READ  = 1000
 	WRITE = 1100
 	LOAD  = 2000
@@ -76,9 +77,7 @@ class SCompiler( object ) :
 	HALT  = 4300 # Matches spec, but cpu thinks 0 also is stop, as per Warford
 	RAMSIZE = 100 # so that bad accesses halt safely rather than provoke coreDump()
 	#
-	LINE = 0
-	VAR  = 1
-	CONST = 2
+	LINE, VAR, CONST = range( 3 )
 	ARRAY = 3
 	FUNCT = 4
 	PHRASE = 5 # haha, a string
@@ -130,7 +129,7 @@ class SCompiler( object ) :
 		maxVert = 5
 		lim = self.smlData.__len__( )
 		# header
-		for yy in range( 0, 5 ) : # should reflect memory size
+		for yy in range( 5 ) : # should reflect memory size
 			print '\t' + str( yy ),
 		print '\n0\t',
 		while ind < lim :

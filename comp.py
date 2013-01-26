@@ -78,27 +78,10 @@ def run( file ) :
 verbose = False # I've changed testCompiler to alter this
 #run( argv[ 1 ] ) # uncomment here & line 7 to test cpu explicitly
 #deitel_version()
-'''
-	Bad examples of using exec( ):
->>>
->>> for name in sys.argv[1:]:
->>>     exec "%s=1" % name
->>> def func(s, **kw):
->>>     for var, val in kw.items():
->>>         exec "s.%s=val" % var  # invalid!
->>> execfile("handler.py")
->>> handle()
 
-	Good examples:
->>>
->>> d = {}
->>> for name in sys.argv[1:]:
->>>     d[name] = 1
->>> def func(s, **kw):
->>>     for var, val in kw.items():
->>>         setattr(s, var, val)
->>> d={}
->>> execfile("handle.py", d, d)
->>> handle = d['handle']
->>> handle()
-'''
+
+
+
+
+
+
