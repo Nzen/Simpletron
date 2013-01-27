@@ -83,7 +83,7 @@ class Cpu( object ) :
 			# this is a convenience, it may not be used if cpu writes to that location, or a goto
 			self.pc += 1
 	
-	def fetch( self ): # vetted 11 12 7
+	def fetch( self ):
 		' get next, get indirected value '
 		if self.mem.exceedAddrBound( self.pc ) :
 			Cpu.fail_coreDump( self, "Address " + str( self.pc ) + " out of range" )
@@ -93,10 +93,12 @@ class Cpu( object ) :
 	def halt( self ) :
 		self.running = False
 	
-	def stdIn( self ) :
+	def stdIn( self ) : # mildly concerned
+		'direct to memory. safe?'
 		self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
 	
-	def stdOut( self ) :
+	def stdOut( self ) : # more concerned
+		'prints from a place in memory. should that be the acc instead?'
 		print self.opVal
 			
 	''' advanced feature
