@@ -1,0 +1,18 @@
+READ 12
+WRITE 34 front
+LOAD x
+STORE x
+ADD_ y
+MINUS y
+DIVIDE z
+TIMES z
+MODUL 12
+GONOW front
+GOIF- front
+GOIF0 x
+HALT y
+x
+y z
+z 12
+12
+34
