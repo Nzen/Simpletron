@@ -64,7 +64,7 @@ class Assembler( object ) :
 				self.initial_pass( input.split( ' ' ) )
 			asm_program.close()
 		except IOError :
-			print "File Error: Perhaps an invalid name?" # 2to3
+			print ( "File Error: Perhaps an invalid name?" )
 
 	def assemble_file( self, asm_file ) : #, verbose_mode ) :
 		'changes sml asm file into simpletron instructions in nn.asm'
@@ -192,7 +192,7 @@ class Assembler( object ) :
 		return sml
 	
 	def index_of_period( self, file_name ) :
-		for back_ind in range( -1, -6, -1 ) : # 2to3 ? # sort of arbitrary
+		for back_ind in range( -1, -6, -1 ) : # sort of arbitrary
 			if file_name[ back_ind ] == '.' :
 				return back_ind
 		else :
@@ -222,29 +222,29 @@ def test_good_syn( simple ) :
 			4007, 4108, 1008 ]
 	became = simple.assemble_stream( asm )
 	worked = True
-	for ind in range( len( became ) - 1 ) : # 2to3
+	for ind in range( len( became ) - 1 ) :
 		if became[ind] != should_be[ind] :
-			print " Didnt match on line " + str(ind) \
+			print ( " Didnt match on line " + str(ind) \
 				+ ", bec-" + str(became[ind]) \
-				+ " should-" + str(should_be[ind])# 2to3
+				+ " should-" + str(should_be[ind]) )
 			worked = False
 	if worked :
-		print "good syntax vetted, for now"
+		print ( "good syntax vetted, for now" )
 	else :
-		print "what?"
+		print ( "what?" )
 
 def t_b_s_catch( simple, bad_asm, the_error ) :
 	'better with a testing module, of course'
 	try :
 		became = simple.assemble_stream( bad_asm )
-		print 'worked, so it\'s a bad test ' + str(simple.output[0])
+		print ( 'worked, so it\'s a bad test ' + str(simple.output[0]) )
 		return False
 	except the_error :
 		return True
-	except Exception as unexpected : # very 2to3
+	except Exception as unexpected :
 		import traceback
-		print "Caught \"" + type(unexpected).__name__ + " - " + str(unexpected) + \
-		"\" instead of " + str(the_error) + " in \"" + bad_asm[0] +"\""
+		print ( "Caught \"" + type(unexpected).__name__ + " - " + str(unexpected) + \
+		"\" instead of " + str(the_error) + " in \"" + bad_asm[0] +"\"" )
 		return False
 
 def test_bad_syn( simple ) :
@@ -260,9 +260,9 @@ def test_bad_syn( simple ) :
 	errors_caught.append( t_b_s_catch( simple, ['y TIMES'], NameError ) )
 	#errors_caught.append( t_b_s_catch( simple, ['bad'], x_Error ) )
 	if False in errors_caught :
-		print "--Didn't catch a syntactic error" # 2to3
+		print ( "--Didn't catch a syntactic error" )
 	else :
-		print "bad syntax caught"
+		print ( "bad syntax caught" )
 
 def test_syntax( simple ) :
 	test_bad_syn( simple )
@@ -271,7 +271,7 @@ def test_syntax( simple ) :
 	simple.t_clear()
 
 def test_with_file( simple ) :
-	print "file printed to " + simple.assemble_file( "asmMonkey.txt" ) # 2to3
+	print ( "file printed to " + simple.assemble_file( "asmMonkey.txt" ) )
 
 def test_assembler() :
 	simple = Assembler()
