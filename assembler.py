@@ -1,11 +1,12 @@
-'''	Hand Eller:
-source
-output
-hw assessment
-	goal: both 2 & 3 compliance
+'''
+Nicholas Prado ; CS 375
+
+An off spec assembler module targeting the simpletron cpu presented in Deitel's How to Program series. The rest of the Deitel Simple exercises hosted on https://github.com/Nzen/Simpletron
+
+Deitel's simpletron described within its How to Program books of any language, in the chapter concerning Arrays. Hosted (illicitly?) online at http://flylib.com/books/en/2.255.1.171/1/
 
 	FINISHED
-initial pass: op var name ;; var val?comm?
+initial pass: op var name ;; var val?name?comm?
 final pass
 test driver
 print code
@@ -13,11 +14,8 @@ print code
 	DOING
 
 	NEED
-(verbose for him?)
 (more comments? a ToC?)
 check if literal op addresses exceed length?
-
-raise TypeError('unknown val for var on line ' + str(lines_done))
 '''
 class Instruction( object ) :
 	def __init__( self, operation, ref_addr ) :
@@ -277,14 +275,5 @@ def test_assembler() :
 	simple = Assembler()
 	test_syntax(simple)
 	test_with_file( simple )
-	
+
 test_assembler()
-
-
-
-
-
-
-
-
-

@@ -44,4 +44,4 @@ def explainSml( file ) :
 		commentingBelow.write( str( lineN ) + ' ' + explanation )
 		lineN += 1
 		# trying to only output if the value is x > 0 or a reference, but that might cut a halt instruction
-	commentingBelow.close
+	commentingBelow.close( )
