@@ -1,18 +1,6 @@
-#rewrite everything
-# intro
-# basic simpletron info
-# basic Simple info
-# running instructions
-# * more detail, use the wiki
+Deitel's _How to Program_ books (Java, C++, C#) have a couple exercises to emulate the other aspects of the programming environment. The first example is the VM that they call Simpletron. To incentivize learning Python, I implemented it. The second exercise involves creating a BASIC-esque compiler to generate its machine code. The complete version is tagged as '1.0' subsequent commits (& branches?) reflect optional improvements to the pair.
 
-Deitel's How to Program books (Java, C++, C#) have a couple exercises to emulate
-the other aspects of the programming environment. The first example is the VM that
-they call Simpletron. To incentivize learning Python, I implemented it. The second
-exercise involves creating a BASIC-esque compiler to generate its machine code. The
-complete version is tagged as '1.0' subsequent commits (& branches?) reflect optional
-improvements to the pair.
-
-__SIMPLETRON ISA__
+## SIMPLETRON ISA
 
 Accumulator, IR, PC; RAM of 100 integers. Advanced adds an index register.
 
@@ -30,65 +18,57 @@ Accumulator, IR, PC; RAM of 100 integers. Advanced adds an index register.
 	BRANCHZERO = 42xx
 	HALT = 43xx (also 0)
 
-xx is the address of the value to operate on. The math operations use the directed
-value on whatever is in the accumulator.
+xx is the address of the value to operate on. The math operations use the directed value on whatever is in the accumulator.
 
-__SIMPLE COMPILER GRAMMER__
+## SIMPLE COMPILER GRAMMER
 (in Wirth's EBNF)
 
-program = { statement };
-statement = line number, space , command expression, ( "\n"  { statement } );
-line number = number;
-number = digit, { digit };
-digit = "0" | "1" | "2" ; (*et cetera on integers x <= 9*)
-space = ? white space ?;
-command expression = unary expression | math expression | conditional expression;
-unary expression = ( unary command, ( identifier | number ) ) | ( "rem" , string ) ;
-unary command = "input" | "print" | "goto" ;
- . (*actually goto can't jump to identifier value, yet*)
-math expression = "let", identifier , "=", ( identifier | number | equation );
-equation = ( parenthized equation | number | identifier ), { operator, equation } ;
-parenthized equation = "(", equation, ")" ;
-operator = "/" | "*" | "+" | "-" | "%" ;
-identifier = alphabetic character { alphabetic character } ;
- . (*depends on how python interprets str.isdigit() else treated as id*)
-alphabetic character = "a" | "A" | "b" | "B" | "c" ; (*et cetera for english chars*)
-conditional expression = "if", identifier, relation, ( identifier | number ),
- . . . "goto" , line number ;
+program = { statement };  
+statement = line number, space , command expression, ( "\n"  { statement } );  
+line number = number;  
+number = digit, { digit };  
+digit = "0" | "1" | "2" ; (*et cetera on integers x <= 9*)  
+space = ? white space ?;  
+command expression = unary expression | math expression | conditional expression;  
+unary expression = ( unary command, ( identifier | number ) ) | ( "rem" , string ) ;  
+unary command = "input" | "print" | "goto" ; (*actually goto can't jump to identifier value, yet*)  
+math expression = "let", identifier , "=", ( identifier | number | equation );  
+equation = ( parenthized equation | number | identifier ), { operator, equation } ;  
+parenthized equation = "(", equation, ")" ;  
+operator = "/" | "*" | "+" | "-" | "%" ;  
+identifier = alphabetic character { alphabetic character } ; (*depends on how python interprets str.isdigit() else treated as id*)  
+alphabetic character = "a" | "A" | "b" | "B" | "c" ; (*et cetera for english chars*)  
+conditional expression = "if", identifier, relation, ( identifier | number ), "goto" , line number ;  
 relation = ">" | "<" | "==" | ">=" | "<=" ; (*should add != or depreciated <>*)
 
-This grammer was much more pleasant to write and is more accurate. (Although I
-omitted the spaces so each would be on a single line. To be clear, separate
-everything.) I also left off the grammer implied by the extensions (for, arrays).
-It makes sense to add as I implement them. This is format is way more extensible than
-the Backhaus form I tried to use earlier.
+This grammer was much more pleasant to write and is more accurate. I also left off the grammer implied by the extensions (for x; arrays). This is format is way more extensible than the Backhaus form I tried to use earlier.
 
-SIMPLE COMMANDS
+### SIMPLE COMMANDS
 
-rem "" - commented string
-input x - value from terminal
-let x = ( 5 + 3 ) / 2 - assign via x = expression
-print 5 - print to terminal
-goto 6 - unconditional jump
-if 5 >= n goto 3 - conditional jump, form of if [ expression ] goto [ line number ]
-end - stop execution
+* rem "" - commented string
+* input x - value from terminal
+* let x = ( 5 + 3 ) / 2 - assign via x = expression
+* print 5 - print to terminal
+* goto 6 - unconditional jump
+* if 5 >= n goto 3 - conditional jump, form of if [ expression ] goto [ line number ]
+* end - stop execution
 
-ADVANCED COMMANDS
-for x = 10 to 50 step 10
-[statements]
+### ADVANCED COMMANDS
+for x = 10 to 50 step 10  
+[statements]  
 next ## signals end
 
-def function ## definition
-[statements; no args, all vars global]
-return
+def function ## definition  
+[statements; no args, all vars global]  
+return  
 gosub function ## usage
 
-array tab = 5, 3, 6
-array tub[5]
-tab.len ## = 3
-tub[4] ## zero index, of course
+* array tab = 5, 3, 6
+* array tub[5]
+* tab.len ## = 3
+* tub[4] ## zero index, of course
 
-__RUNNING INSTRUCTIONS__
+## RUNNING INSTRUCTIONS
 (written for Python 2.6.7; Py 3.x need to alter prints and so on) 
 
 To test cpu alone, uncomment comp needs lines 7 & 37 to read from the command line
@@ -101,7 +81,7 @@ Simpletron is currently set to verbose in comp, flip it to only see terminal & i
 To test the postfixer (shuntyard/reverse polish expression), the instructions are
 in testPost. It has an important warning within about input.
 
-__YET TODO__
+## YET TODO
 
 Gosub & return productions. Implementing scope and arguments is outside my current
 interest.
@@ -112,7 +92,7 @@ make me cringe at how monolithic this compiler is.
 
 Inclined to add an index register to cpu, mainly for the packed string suggested,
 but also for int arrays. (So it is only one access rather than two to get the
-value. Because, this implementation is all about efficiency.) This would sound a
+value. Obviously, this implementation is all about efficiency.) This would sound a
 total death knell for the disassembler since the memory cells will hold two chars
 and the first is the string's length.
 
@@ -132,3 +112,10 @@ wiki for this project, so I guess it became the practice. The current version is
 (largely) kosher for an enliteration. I was going to hem & haw about waiting to
 implement the extensions, but the main value of the spec is in its canonical
 aspect, not the extras that Deitel left ambiguous.
+
+* rewrite everything
+* intro
+* basic simpletron info
+* basic Simple info
+* running instructions
+* more detail, use the wiki

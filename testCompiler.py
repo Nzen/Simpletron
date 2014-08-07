@@ -97,7 +97,7 @@ try :
 			verbose = True
 	file = argv[ 1 ]
 except IndexError:
-	print "you forgot the fileName argument"
+	print "you forgot the fileName to compile"
 	exit( 0 )
 print "\tusing %s" % file
 smlName = simple.compile( file, verbose )
