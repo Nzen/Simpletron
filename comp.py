@@ -77,7 +77,7 @@ def run( file ) :
 
 verbose = False # I've changed testCompiler to alter this
 #run( argv[ 1 ] ) # uncomment here & line 7 to test cpu explicitly
-#deitel_version()
+#deitel_version() # type instructions by hand
 '''
 	Bad examples of using exec( ):
 >>>
