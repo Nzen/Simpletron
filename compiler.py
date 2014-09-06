@@ -19,6 +19,16 @@ change ram functions & dependents from camel case
 > consider saving program as a grid? means changing disassembler and comp
 > rename comp to testCpu?
 '''
+'''
+26 Aug 14
+started parser. point is to validate the line's syntax and then give back a tuple with reject flag
+or a collection of the stuff that command needs. that way I can extract the line validation from
+this big class. however, that means changing first pass to give the line to parser, make notes
+(in symbol table), and emit the asm.
+what I really hoped to do was just finish the loop & gosub commands, but maybe this makes it
+easier, as I can reinvestigate how this works in a nonthreatening fashion. I mean, I can make
+parser, and then not use it. Eh.
+'''
 
 import postFixer
 import stack
@@ -722,6 +732,62 @@ class SCompiler( object ) :
 		}
 	operators = [ "/", "*", "+", "-", "%", ">", '(', ')' ]
 	# added sentinel to guard against array overflow during optimization
+
+class Parser( object ) :
+	'get a line, emit a struct that rejects or informs compiler what to emit/save'
+	OKAY = -15
+	SYNTAX_ERROR = -1
+	L_NUM = 0
+	COMMD = 1
+	
+	def __init__( self ) :
+		self.symbol = ""
+
+	def initial_checks( self, segments ) :
+		if segments.length() < 2 # FIX to real function
+			return ( -1, SYNTAX_ERROR, "incomplete line: missing # or command" )
+		worked = self.line_number_valid( segments[L_NUM] )
+		if ( not worked ) :
+			return ( -1, SYNTAX_ERROR, "invalid line number" )
+		segments[ COMMD ] = segments[ COMMD ].lower()
+		worked = self.command_valid( segments[COMMD] )
+		if ( not worked ) :
+			return ( segments[L_NUM], SYNTAX_ERROR, "invalid command: " + segments[COMMD] )
+		else
+			return ( OKAY )
+
+	def line_number_valid( self, maybe_number ) :
+		return maybe_number.isDigit()
+
+	def command_valid( self, maybe_command ) :
+		return maybe_command in SCompiler.commandList
+
+	def lineParse( self, segments ) :
+		init_answer = self.initial_checks( segments )
+		if init_answer[0] != OKAY :
+			return init_answer # because error
+	'''
+	-c valid command syntax ? or reject piecewise
+	-c return ( line, command, optional vars or reason rejected ) tuple
+	'''
+	'''
+	def firstPass( self, line ) :
+		segment = line.split( ' ' )
+		lineNumber = segment[ 0 ]
+		comm = segment[ 1 ]
+		SCompiler.validateCommandType( self, comm )
+		newInstruc = SCompiler.commandList[ comm ] # string of the function name
+		newInstruc( self, segment[ 2: ] ) # cut line number & command, send restOfLine
+	'''
+	'''
+	* rem "" - commented string
+	* input x - value from terminal
+	* let x = ( 5 + 3 ) / 2 - assign via x = expression
+	* print 5 - print to terminal
+	* goto 6 - unconditional jump
+	* if 5 >= n goto 3 - conditional jump, form of if [ expression ] goto [ line number ]
+	* end - stop execution
+	'''
 
 '''	OUTPUT
 C: ... >python testCompiler.py monkey.txt -v
