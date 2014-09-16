@@ -59,7 +59,7 @@ def deitel_version( ) :
 			print "Stopping input. Running Simpletron ..."
 			break
 		elif invalid( unknown ) :
-			print "\tinvalid, use {-9999 - 9999}"
+			print "\tinvalid, use {-9999 :: 9999}"
 			continue
 		val = int( unknown )
 		ssd.setAt( addr, val )
@@ -67,38 +67,41 @@ def deitel_version( ) :
 	cmd = cpu.Cpu( 0, ssd, not verbose )
 	cmd.run( )
 
+def test() :
+	bus = ram.Ram( )
+	testRam( bus )
+	testCpu( bus )
+	
 def run( file ) :
 	ssd = ram.Ram( )
 	cmd = cpu.Cpu( 0, ssd, verbose )
 	ssd.loader( file )
-	#testRam( ssd )
-	#testCpu( ssd )
 	cmd.run( )
 
-verbose = False # I've changed testCompiler to alter this
-#run( argv[ 1 ] ) # uncomment here & line 7 to test cpu explicitly
+verbose = False
+#run( argv[ 1 ] ) # uncomment here & line 7 to run cpu with [file]
+#test()
 #deitel_version() # type instructions by hand
-'''
-	Bad examples of using exec( ):
->>>
->>> for name in sys.argv[1:]:
->>>     exec "%s=1" % name
->>> def func(s, **kw):
->>>     for var, val in kw.items():
->>>         exec "s.%s=val" % var  # invalid!
->>> execfile("handler.py")
->>> handle()
 
-	Good examples:
->>>
->>> d = {}
->>> for name in sys.argv[1:]:
->>>     d[name] = 1
->>> def func(s, **kw):
->>>     for var, val in kw.items():
->>>         setattr(s, var, val)
->>> d={}
->>> execfile("handle.py", d, d)
->>> handle = d['handle']
->>> handle()
+'''
+ [output]
+
+ print to terminal:  5
+ wait for terminal input  -- 4
+ naive goto ptr to 3
+ load Acc with 3 from 27
+ subtract (acc) 3 and 1
+ subtract (acc) 2 and 1
+ if Acc (1) is zero, goto 16
+ load Acc with 3 from 27
+ load Acc with 5 from 29
+ add (acc) 5 and 0
+ save Acc (5) into 24
+ load Acc with 4 from 28
+ subtract (acc) 4 and 5
+ save Acc (-1) into 23
+ multiply (acc) -1 and -1
+ save Acc (1) into 28
+ print to terminal:  1
+Halt program
 '''

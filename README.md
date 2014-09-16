@@ -1,85 +1,86 @@
-Deitel's _How to Program_ books (Java, C++, C#) have a couple exercises to emulate the other aspects of the programming environment. The first example is the VM that they call Simpletron. To incentivize learning Python, I implemented it. The second exercise involves creating a BASIC-esque compiler to generate its machine code. The complete version is tagged as '1.0' subsequent commits (& branches?) reflect optional improvements to the pair.
+Deitel's _How to Program_ books (Java, C++, C#) have a couple exercises to emulate the other aspects of the programming environment. The first example is the VM that they call Simpletron. I implemented it to learn Python. The second exercise involves creating a BASIC-esque compiler to generate its machine code. The complete version is tagged as '1.0' subsequent commits & branches reflect optional improvements to the pair.
 
-## SIMPLETRON ISA
+## RUNNING INSTRUCTIONS
+(written for Python 2.6.7; Py 3.x need to alter prints and so on)
+
+To test cpu alone, uncomment comp needs lines 7 & 37 to read from the command line
+and then use "python comp.py [filename]".
+
+To run the Simple compiler, use programmer. It expects either "python programmer.py [file] (flags)" or "python programmer.py -h". The latter will print the argument explanations. Possible options are *-v* verbose, *-r* load and run the asm, *-t* run tests, & *-h* print help.
+
+comp.py represents the simpletron. Because I'm working on Simple currently, comp is a library rather than stand alone. To change that, uncomment line 7 (import args) & the line you want ~83. One can test it, run it with an asm file, or run the canonical Deitel version (ie feed it by hand).
+
+To test the postfixer (shuntyard/reverse polish expression), the instructions are
+in testPost. It has an important warning within about input.
+
+### SIMPLETRON ISA
 
 Accumulator, IR, PC; RAM of 100 integers. Advanced adds an index register.
 
-	READ = 10xx
-	WRITE = 11xx
-	LOAD = 20xx
-	STORE = 21xx
-	ADD = 30xx
-	SUBTRACT = 31xx
-	DIVIDE = 32xx
-	MULTIPY = 33xx
-	MODULUS = 34xx
-	BRANCH = 40xx
-	BRANCHNEG = 41xx
-	BRANCHZERO = 42xx
-	HALT = 43xx (also 0)
+	10xx = READ
+	11xx = WRITE
+	20xx = LOAD
+	21xx = STORE
+	30xx = ADD
+	31xx = SUBTRACT
+	32xx = DIVIDE
+	33xx = MULTIPY
+	34xx = MODULUS
+	40xx = BRANCH
+	41xx = BRANCHNEG
+	42xx = BRANCHZERO
+	43xx = HALT (also 0)
 
 xx is the address of the value to operate on. The math operations use the directed value on whatever is in the accumulator.
 
-## SIMPLE COMPILER GRAMMER
+### SIMPLE COMPILER GRAMMER
 (in Wirth's EBNF)
 
-program = { statement };  
-statement = line number, space , command expression, ( "\n"  { statement } );  
-line number = number;  
-number = digit, { digit };  
-digit = "0" | "1" | "2" ; (*et cetera on integers x <= 9*)  
-space = ? white space ?;  
-command expression = unary expression | math expression | conditional expression;  
-unary expression = ( unary command, ( identifier | number ) ) | ( "rem" , string ) ;  
-unary command = "input" | "print" | "goto" ; (*actually goto can't jump to identifier value, yet*)  
-math expression = "let", identifier , "=", ( identifier | number | equation );  
-equation = ( parenthized equation | number | identifier ), { operator, equation } ;  
-parenthized equation = "(", equation, ")" ;  
-operator = "/" | "*" | "+" | "-" | "%" ;  
-identifier = alphabetic character { alphabetic character } ; (*depends on how python interprets str.isdigit() else treated as id*)  
-alphabetic character = "a" | "A" | "b" | "B" | "c" ; (*et cetera for english chars*)  
-conditional expression = "if", identifier, relation, ( identifier | number ), "goto" , line number ;  
-relation = ">" | "<" | "==" | ">=" | "<=" ; (*should add != or depreciated <>*)
+	program = { statement };
+	statement = line number, space , command expression, ( "\n"  { statement } );
+	line number = number;
+	number = digit, { digit };
+	digit = "0" | "1" | "2" ; (*et cetera on integers x <= 9*)
+	space = ? white space ?;
+	command expression = unary expression | math expression | conditional expression;
+	unary expression = ( unary command, ( identifier | number ) ) | ( "rem" , string ) ;
+	unary command = "input" | "print" | "goto" ; (*actually goto can't jump to identifier value, yet*)
+	math expression = "let", identifier , "=", ( identifier | number | equation );
+	equation = ( parenthized equation | number | identifier ), { operator, equation } ;
+	parenthized equation = "(", equation, ")" ;
+	operator = "/" | "*" | "+" | "-" | "%" ;
+	identifier = alphabetic character { alphabetic character } ; (*via python str.isdigit() else, treated as id*)
+	alphabetic character = "a" | "A" | "b" | "B" | "c" ; (*et cetera for english chars*)
+	conditional expression = "if", identifier, relation, ( identifier | number ), "goto" , line number ;
+	relation = ">" | "<" | "==" | ">=" | "<=" ; (*should add != or depreciated <> *)
 
 This grammer was much more pleasant to write and is more accurate. I also left off the grammer implied by the extensions (for x; arrays). This is format is way more extensible than the Backhaus form I tried to use earlier.
 
 ### SIMPLE COMMANDS
 
-* rem "" - commented string
+* rem [text] - commented string
 * input x - value from terminal
-* let x = ( 5 + 3 ) / 2 - assign via x = expression
-* print 5 - print to terminal
-* goto 6 - unconditional jump
-* if 5 >= n goto 3 - conditional jump, form of if [ expression ] goto [ line number ]
+* let x = [expression] - assignment
+* print # - print to terminal
+* goto # - unconditional jump
+* if [expression] goto # - conditional jump
 * end - stop execution
 
 ### ADVANCED COMMANDS
-for x = 10 to 50 step 10  
-[statements]  
-next ## signals end
 
-def function ## definition  
-[statements; no args, all vars global]  
-return  
-gosub function ## usage
+	for x = 10 to 50 step 10  
+	 [statements]  
+	next
+
+	# [statement]  
+	 [statements]  
+	return  
+	gosub #
 
 * array tab = 5, 3, 6
 * array tub[5]
 * tab.len ## = 3
 * tub[4] ## zero index, of course
-
-## RUNNING INSTRUCTIONS
-(written for Python 2.6.7; Py 3.x need to alter prints and so on) 
-
-To test cpu alone, uncomment comp needs lines 7 & 37 to read from the command line
-and then use "comp.py [filename]".
-
-To test the compiler use "testCompiler.py [filename]". It will ask whether you want
-to run the file; any answer with y in it will run the .sml file through simpletron.
-Simpletron is currently set to verbose in comp, flip it to only see terminal & input.
-
-To test the postfixer (shuntyard/reverse polish expression), the instructions are
-in testPost. It has an important warning within about input.
 
 ## YET TODO
 
@@ -113,9 +114,4 @@ wiki for this project, so I guess it became the practice. The current version is
 implement the extensions, but the main value of the spec is in its canonical
 aspect, not the extras that Deitel left ambiguous.
 
-* rewrite everything
-* intro
-* basic simpletron info
-* basic Simple info
-* running instructions
 * more detail, use the wiki

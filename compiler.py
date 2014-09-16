@@ -20,14 +20,7 @@ change ram functions & dependents from camel case
 > rename comp to testCpu?
 '''
 '''
-26 Aug 14
-started parser. point is to validate the line's syntax and then give back a tuple with reject flag
-or a collection of the stuff that command needs. that way I can extract the line validation from
-this big class. however, that means changing first pass to give the line to parser, make notes
-(in symbol table), and emit the asm.
-what I really hoped to do was just finish the loop & gosub commands, but maybe this makes it
-easier, as I can reinvestigate how this works in a nonthreatening fashion. I mean, I can make
-parser, and then not use it. Eh.
+[notes]
 '''
 
 import postFixer
@@ -744,7 +737,7 @@ class Parser( object ) :
 		self.symbol = ""
 
 	def initial_checks( self, segments ) :
-		if segments.length() < 2 # FIX to real function
+		if segments.length() < 2 : # FIX to real function
 			return ( -1, SYNTAX_ERROR, "incomplete line: missing # or command" )
 		worked = self.line_number_valid( segments[L_NUM] )
 		if ( not worked ) :
@@ -753,7 +746,7 @@ class Parser( object ) :
 		worked = self.command_valid( segments[COMMD] )
 		if ( not worked ) :
 			return ( segments[L_NUM], SYNTAX_ERROR, "invalid command: " + segments[COMMD] )
-		else
+		else :
 			return ( OKAY )
 
 	def line_number_valid( self, maybe_number ) :
@@ -790,7 +783,6 @@ class Parser( object ) :
 	'''
 
 '''	OUTPUT
-C: ... >python testCompiler.py monkey.txt -v
         using monkey.txt
 
         Forward referenced lines:
@@ -823,24 +815,4 @@ Instr count - 17        Data counter - 23
  15      2128    1128    4300    0000    0000
  20      0000    0000    0000    0000    0000
  25      0000    0001    0003    0000    0005    done
-
-Run sml file? y/n -- y
- print to terminal:  5
- wait for terminal input  -- 4
- naive goto ptr to 3
- load Acc with 3 from 27
- subtract (acc) 3 and 1
- subtract (acc) 2 and 1
- if Acc (1) is zero, goto 16
- load Acc with 3 from 27
- load Acc with 5 from 29
- add (acc) 5 and 0
- save Acc (5) into 24
- load Acc with 4 from 28
- subtract (acc) 4 and 5
- save Acc (-1) into 23
- multiply (acc) -1 and -1
- save Acc (1) into 28
- print to terminal:  1
-Halt program
 '''

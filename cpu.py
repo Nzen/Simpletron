@@ -42,7 +42,7 @@ class Cpu( object ) :
 		elif Cpu.negWordLim > self.acc:
 			Cpu.fail_coreDump( self, "Accumulator underflow" )
 	
-	def explain( self, operation ) :
+	def explain( self, operation ) : # py2.7
 		if operation == 0 or operation == Cpu.HALT :
 			print "Halt program"
 		elif operation == Cpu.READ :
@@ -94,11 +94,16 @@ class Cpu( object ) :
 		self.running = False
 	
 	def stdIn( self ) :
-		self.mem.setAt( self.opAddr, int( raw_input( " -- " ) ) )
-	
+		inp = int( raw_input( " -- " ) )
+		temp = self.acc
+		self.acc = inp
+		Cpu.checkOverflow( self )
+		self.acc = temp
+		self.mem.setAt( self.opAddr, inp )
+
 	def stdOut( self ) :
 		print self.opVal
-			
+
 	''' advanced feature
 	def strI_O( self, type, explanation ) : # PSEUDO: fix this copypasta
 		# input; output to terminal; get length?
@@ -114,7 +119,7 @@ class Cpu( object ) :
 		else : # type == Cpu.WRITE
 			str = "" # get and interpret via chr( mem + 27 )
 			print str'''
-	
+
 	def add( self ) :
 		self.acc += self.opVal
 		Cpu.checkOverflow( self )
