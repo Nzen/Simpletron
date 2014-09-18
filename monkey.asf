@@ -1,0 +1,61 @@
+1129
+1028
+4003
+2027
+3126
+4111
+2025
+3029
+3128
+3227
+2128
+1128
+4300
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+3
+0
+5
+##
+0 print from 29
+1 input to 28
+2 naive goto 3
+3 load acc from 27
+4 - - acc & from 26
+5 if acc Negative goto 11
+6 load acc from 25
+7 ++ acc & from 29
+8 - - acc & from 28
+9 * * acc & from 27
+10 store acc into 28
+11 print from 28
+12 stop execution 0
+13 ..0
+14 ..0
+15 ..0
+16 ..0
+17 ..0
+18 ..0
+19 ..0
+20 ..0
+21 ..0
+22 ..0
+23 ..0
+24 ..0
+25 ..0
+26 ..0
+27 ..3
+28 ..0
+29 ..5

@@ -14,13 +14,16 @@ change ram functions & dependents from camel case
 
 >> change forward references to vector
 >> refactor checkForUnexpected()
->> print decrypted (from postfix) more nicely(); print disassembler when verbose?
+>> print decrypted (from postfix) more nicely(); only print disassembler when verbose?
 >> eliminate premature prepInstruction() from firstPass, make each opCode emission handle self only
 > consider saving program as a grid? means changing disassembler and comp
 > rename comp to testCpu?
 '''
 '''
 [notes]
+above maybe
+pull parsing type code out of the initial command methods for later encapsulation into parser
+check the two fudged tests in programmer
 '''
 
 import postFixer
