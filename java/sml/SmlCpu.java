@@ -1,4 +1,4 @@
-package Sml;
+package sml;
 
 //package java;
 
