@@ -1,5 +1,18 @@
 Deitel's _How to Program_ books (Java, C++, C#) have a couple exercises to emulate the other aspects of the programming environment. The first example is the VM that they call Simpletron. To incentivize learning Python, I implemented it. The second exercise involves creating a BASIC-esque compiler to generate its machine code. The complete version is tagged as '1.0' subsequent commits (& branches?) reflect optional improvements to the pair.
 
+## RUNNING INSTRUCTIONS
+(written for Python 2.6.7; Py 3.x need to alter prints and so on) 
+
+To test cpu alone, uncomment comp needs lines 7 & 37 to read from the command line
+and then use "comp.py [filename]".
+
+To test the compiler use "testCompiler.py [filename]". It will ask whether you want
+to run the file; any answer with y in it will run the .sml file through simpletron.
+Simpletron is currently set to verbose in comp, flip it to only see terminal & input.
+
+To test the postfixer (shuntyard/reverse polish expression), the instructions are
+in testPost. It has an important warning within about input.
+
 ## SIMPLETRON ISA
 
 Accumulator, IR, PC; RAM of 100 integers. Advanced adds an index register.
@@ -68,19 +81,6 @@ gosub function ## usage
 * tab.len ## = 3
 * tub[4] ## zero index, of course
 
-## RUNNING INSTRUCTIONS
-(written for Python 2.6.7; Py 3.x need to alter prints and so on) 
-
-To test cpu alone, uncomment comp needs lines 7 & 37 to read from the command line
-and then use "comp.py [filename]".
-
-To test the compiler use "testCompiler.py [filename]". It will ask whether you want
-to run the file; any answer with y in it will run the .sml file through simpletron.
-Simpletron is currently set to verbose in comp, flip it to only see terminal & input.
-
-To test the postfixer (shuntyard/reverse polish expression), the instructions are
-in testPost. It has an important warning within about input.
-
 ## YET TODO
 
 Gosub & return productions. Implementing scope and arguments is outside my current
@@ -113,9 +113,4 @@ wiki for this project, so I guess it became the practice. The current version is
 implement the extensions, but the main value of the spec is in its canonical
 aspect, not the extras that Deitel left ambiguous.
 
-* rewrite everything
-* intro
-* basic simpletron info
-* basic Simple info
-* running instructions
 * more detail, use the wiki
