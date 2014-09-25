@@ -1,0 +1,336 @@
+  <!DOCTYPE html>
+ <html language='en'>
+<head>
+	<meta charset="UTF-8"></meta>
+	<title>Deitel Simpletron Spec</title>	<!-- type="text/css" -->
+	<link rel="stylesheet" href="basic.css">
+</head>
+<body>
+ <div class="l_border">&emsp;
+ </div>
+ <div class="content">
+	<h1>excerpt from <em><a href="http://www.deitel.com/Books/Java/JavaHowtoProgram10eEarlyObjects/tabid/3656/Default.aspx">Java: How to Program</a></em></h1>
+	<h3>Special Section - Building Your Own Computer</h3>
+	<p>
+	 &copy; 2010 &amp; earlier, Deitel. Reproduced <em>without</em> permission. Oh well. If you represent Deitel, tell me - someone cares enough about Simpletron to spend a couple hours turning <a href="http://flylib.com/books/en/2.255.1.171/1/">a table formatted version</a> of these exercises by hand into a div formatted page - to take it down and I will. <!-- By god, I will. -->
+	</p>
+<!-- Unfortunately, I misunderstood the rarity of the section numbers, so I'd probably cut that if I revisit this. In the book they are just an inset. -->
+
+	<p class="page">page 350</p>
+	<div class="sec_header">	Intro
+	</div>
+	<div class="sec_content">
+	 <p>
+	  In the next several problems, we take a temporary diversion from the world of high-level language programming. To "peel open " a computer and look at its internal structure. We introduce machine-language programming and write several machine-language programs. To make this an especially valuable experience, we then build a computer (through the technique of software-based simulation ) on which you can execute your machine-language programs.
+	 </p>
+	</div>
+	<p class="page">page 351</p>
+	<hr>
+	<div class="sec_header">	7.34
+	</div>
+	<div class="sec_content">
+	<p>
+	 <em>( Machine-Language Programming )</em> Let us create a computer called the Simpletron. As its name implies, it is a simple, but powerful, machine. The Simpletron runs programs written in the only language it directly understands: Simpletron Machine Language, or SML for short.
+	</p>
+	<p>
+	 The Simpletron contains an accumulator a special register in which information is put before the Simpletron uses that information in calculations or examines it in various ways. All the information in the Simpletron is handled in terms of words. A word is a signed four-digit decimal number, such as <span class="strict">+3364</span> , <span class="strict">-1293</span> , <span class="strict">+0007</span> and <span class="strict">-0001</span> . The Simpletron is equipped with a 100-word memory, and these words are referenced by their location numbers <span class="strict">00 , 01 , ..., 99</span>.
+	</p>
+	<p>
+	 Before running an SML program, we must load , or place, the program into memory. The first instruction (or statement) of every SML program is always placed in location <span class="strict">00</span>. The simulator will start executing at this location.
+	</p>
+	<p>
+	 Each instruction written in SML occupies one word of the Simpletron's memory (and hence instructions are signed four-digit decimal numbers). We shall assume that the sign of an SML instruction is always plus, but the sign of a data word may be either plus or minus. Each location in the Simpletron's memory may contain an instruction, a data value used by a program or an unused (and hence undefined) area of memory. The first two digits of each SML instruction are the operation code specifying the operation to be performed. SML operation codes are summarized in fig 7.35.
+	</p>
+	<!--<hr>-->
+	<p>
+	 <dl class="figure">
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">READ</span> = <span class="num">10</span>;</span></dt>
+	   <dd>Read a word from the keyboard into a specific location in memory.</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">WRITE</span> = <span class="num">11</span>;</span></dt>
+	   <dd>Write a word from a specific location in memory to the screen.</dd>
+
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">LOAD</span> = <span class="num">20</span>;</span></dt>
+	   <dd>Load a word from a specific location in memory into the accumulator.</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">STORE</span> = <span class="num">21</span>;</span></dt>
+	   <dd>Store a word from the accumulator into a specific location in memory.</dd>
+
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">ADD</span> = <span class="num">30</span>;</span></dt>
+	   <dd>Add a word from a specific location in memory to the word<br>in the accumulator (leave the result in the accumulator).</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">SUBTRACT</span> = <span class="num">31</span>;</span></dt>
+	   <dd>Subtract a word from a specific location in memory from the word<br>in the accumulator (leave the result in the accumulator).</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">DIVIDE</span> = <span class="num">32</span>;</span></dt>
+	   <dd>Divide a word from a specific location in memory into the word<br>in the accumulator (leave result in the accumulator).</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">MULTIPLY</span> = <span class="num">33</span>;</span></dt>
+	   <dd>Multiply a word from a specific location in memory by the word<br>in the accumulator (leave the result in the accumulator).</dd>
+
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">BRANCH</span> = <span class="num">40</span>;</span></dt>
+	   <dd>Branch to a specific location in memory.</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">BRANCHNEG</span> = <span class="num">41</span>;</span></dt>
+	   <dd>Branch to a specific location in memory if the accumulator is negative.</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">BRANCHZERO</span> = <span class="num">42</span>;</span></dt>
+	   <dd>Branch to a specific location in memory if the accumulator is zero.</dd>
+	  <dt class="d_wide"><span class="strict"><span class="modifier">final int</span> <span class="var">HALT</span> = <span class="num">43</span>;</span></dt>
+	   <dd>Halt. The program has completed its task.</dd>
+	 </dl>
+	Figure 7.35: Simpletron Machine Language (SML) operation codes.
+	</p>
+	<p class="page">page 352</p>
+	<hr>
+	<p>
+	The last two digits of an SML instruction are the operand the address of the memory location containing the word to which the operation applies. Let's consider several simple SML programs.
+	</p>
+	<p>
+	  The first SML program (Fig. 7.36) reads two numbers from the keyboard and computes and displays their sum. The instruction <span class="strict">+1007</span> reads the first number from the keyboard and places it into location <span class="strict">07</span> (which has been initialized to 0). Then instruction <span class="strict">+1008</span> reads the next number into location <span class="strict">08</span>. The load instruction, <span class="strict">+2007</span>, puts the first number into the accumulator, and the add instruction, <span class="strict">+3008</span>, adds the second number to the number in the accumulator. All SML arithmetic instructions leave their results in the accumulator. The store instruction, <span class="strict">+2109</span>, places the result back into memory location <span class="strict">09</span>, from which the write instruction, <span class="strict">+1109</span>, takes the number and displays it (as a signed four-digit decimal number). The halt instruction, <span class="strict">+4300</span>, terminates execution.
+	</p>
+	<p>
+	 <table class="figure">
+	  <tr>
+		<th>Location</th> <th>Number</th> <th>Instruction</th>
+	  </tr> <tr>
+		<td>00</td><td class="strict">+1007</td><td>(Read A)</td>
+	  </tr> <tr>
+		<td>01</td><td class="strict">+1008</td><td>(Read B)</td>
+	  </tr> <tr>
+		<td>02</td><td class="strict">+2007</td><td>(Load A)</td>
+	  </tr> <tr>
+		<td>03</td><td class="strict">+3008</td><td>(Add B)</td>
+	  </tr> <tr>
+		<td>04</td><td class="strict">+2109</td><td>(Store C)</td>
+	  </tr> <tr>
+		<td>05</td><td class="strict">+1109</td><td>(Write C)</td>
+	  </tr> <tr>
+		<td>06</td><td class="strict">+4300</td><td>(Halt)</td>
+	  </tr> <tr>
+		<td>07</td><td class="strict">+0000</td><td>(Variable A)</td>
+	  </tr> <tr>
+		<td>08</td><td class="strict">+0000</td><td>(Variable B)</td>
+	  </tr> <tr>
+		<td>09</td><td class="strict">+0000</td><td>(Result C)</td>
+	  </tr>
+	 </table>
+	 Figure 7.36. SML program that reads two integers and computes their sum.
+	</p>
+	<p>
+	 <table class="figure"> <tr>
+		<th>Location</th> <th>Number</th> <th>Instruction</th>
+	  </tr> <tr>
+		<td>00</td><td class="strict">+1009</td><td>(Read A)</td>		
+	  </tr> <tr>
+		<td>01</td><td class="strict">+1010</td><td>(Read B)</td>
+	  </tr> <tr>
+		<td>02</td><td class="strict">+2009</td><td>(Load A)</td>
+	  </tr> <tr>
+		<td>03</td><td class="strict">+3110</td><td>(Subtract B)</td>
+	  </tr> <tr>
+		<td>04</td><td class="strict">+4107</td><td>(Branch negative to 07)</td>
+	  </tr> <tr>
+		<td>05</td><td class="strict">+1109</td><td>(Write A)</td>
+	  </tr> <tr>
+		<td>06</td><td class="strict">+4300</td><td>(Halt)</td>
+	  </tr> <tr>
+		<td>07</td><td class="strict">+1110</td><td>(Write B)</td>
+	  </tr> <tr>
+		<td>08</td><td class="strict">+4300</td><td>(Halt)</td>
+	  </tr> <tr>
+		<td>09</td><td class="strict">+0000</td><td>(Variable A)</td>
+	  </tr> <tr>
+		<td>10</td><td class="strict">+0000</td><td>(Variable B)</td>
+	  </tr>
+	 </table>
+	 Figure 7.37. SML program that reads two integers and determines the larger.
+	</p>
+	<p>
+	Now write SML programs to accomplish each of the following tasks :
+	<ol type="a">
+	<li>Use a sentinel-controlled loop to read 10 positive numbers. Compute and display their sum.</li>
+	<li>Use a counter-controlled loop to read seven numbers, some positive and some negative, and compute and display their average.</li>
+	<li>Read a series of numbers, and determine and display the largest number. The first number read indicates how many numbers should be processed .</li>
+	</ol>
+	</p>
+	</div>
+	<p class="page">page 353</p>
+	<hr>
+	<div class="sec_header">	7.35
+	</div>
+	<div class="sec_content">
+	<p>
+	 <em>( Computer Simulator )</em> In this problem, you are going to build your own computer. No, you will not be soldering components together. Rather, you will use the powerful technique of software-based simulation to create an object-oriented software model of the Simpletron of Exercise 7.34. Your Simpletron simulator will turn the computer you are using into a Simpletron, and you will actually be able to run, test and debug the SML programs you wrote in Exercise 7.34.
+	</p> <p>
+	 When you run your Simpletron simulator, it should begin by displaying:
+	  <blockquote class="strict">
+	  *** Welcome to Simpletron! ***<br>
+	  *** Please enter your program one instruction  ***<br>
+	  *** (or data word) at a time into the input    ***<br>
+	  *** text field. I will display the location    ***<br>
+	  *** number and a question mark (?). You then   ***<br>
+	  *** type the word for that location. Press the ***<br>
+	  *** Done button to stop entering your program. ***
+	 </blockquote>
+	</p> <p>
+	 Your application should simulate the memory of the Simpletron with a one-dimensional array memory that has 100 elements. Now assume that the simulator is running, and let us examine the dialog as we enter the program of Fig. 7.37 (Exercise 7.34):
+	 <blockquote class="strict">
+	  00 ? +1009<br>
+	  01 ? +1010<br>
+	  02 ? +2009<br>
+	  03 ? +3110<br>
+	  04 ? +4107<br>
+	  05 ? +1109<br>
+	  06 ? +4300<br>
+	  07 ? +1110<br>
+	  08 ? +4300<br>
+	  09 ? +0000<br>
+	  10 ? +0000<br>
+	  11 ? -99999
+	 </blockquote>
+	</p>
+	<hr> <p class="page">page 354</p>
+	<p>
+	 Your program should display the memory location followed by a question mark. Each of the values to the right of a question mark is input by the user . When the sentinel value -99999 is input, the program should display the following:
+	 <blockquote class="strict">
+	  *** Program loading completed ***<br>
+	  *** Program execution begins  ***
+	 </blockquote>
+	 The SML program has now been placed (or loaded) in array <span class="strict">memory</span> . Now the Simpletron executes the SML program. Execution begins with the instruction in location <span class="strict">00</span> and, as in Java, continues sequentially, unless directed to some other part of the program by a transfer of control.
+	</p> <p>
+	Use the variable <span class="strict">accumulator</span> to represent the accumulator register. Use the variable <span class="strict">instructionCounter</span> to keep track of the location in memory that contains the instruction being performed. Use the variable operationCode to indicate the operation currently being performed (i.e., the left two digits of the instruction word). Use the variable <span class="strict">operand</span> to indicate the memory location on which the current instruction operates. Thus, <span class="strict">operand</span> is the rightmost two digits of the instruction currently being performed. Do not execute instructions directly from memory. Rather, transfer the next instruction to be performed from memory to a variable called <span class="strict">instructionRegister</span> . Then "pick off" the left two digits and place them in <span class="strict">operationCode</span> , and "pick off" the right two digits and place them in <span class="strict">operand</span> . When the Simpletron begins execution, the special registers are all initialized to zero.
+	</p> <p>
+	 Now, let us "walk through" execution of the first SML instruction, <span class="strict">+1009</span> in memory location <span class="strict">00</span> . This procedure is called an instruction execution cycle.
+	</p> <p>
+	The instructionCounter tells us the location of the next instruction to be performed. We fetch the contents of that location from memory by using the Java statement
+	 <blockquote class="strict">
+		<span class="var">instructionRegister</span> = <span class="var">memory</span>[ <span class="var">instructionCounter</span> ];
+	 </blockquote>
+	</p> <p>
+	 The operation code and the operand are extracted from the instruction register by the statements
+	 <blockquote class="strict">
+		<span class="var">operationCode</span> = <span class="var">instructionRegister</span> / <span class="num">100</span>;<br>
+		<span class="var">operand</span> = <span class="var">instructionRegister</span> % <span class="num">100</span>;
+	 </blockquote>
+	</p> <p>
+	 Now the Simpletron must determine that the operation code is actually a read (versus a write , a load , etc.). A switch differentiates among the 12 operations of SML. In the switch statement, the behavior of various SML instructions is simulated as shown in Fig. 7.38. We discuss branch instructions shortly and leave the others to you.
+	</p> <p>
+	 <dl class="figure">
+	  <dt>read:</dt>
+	   <dd>Display the prompt <span class="strict">Enter an integer</span> , then input the integer and <br> store it in location <span class="strict"><span class="var">memory</span>[ <span class="var">operand</span> ]</span> .</dd>
+	  <dt>load:</dt>
+	   <dd><span class="strict"><span class="var">accumulator</span> = <span class="var">memory</span>[ <span class="var">operand</span> ] ;</span></dd>
+	  <dt>add:</dt>
+	   <dd><span class="strict"><span class="var">accumulator</span> += <span class="var">memory</span>[ <span class="var">operand</span> ] ;</span></dd>
+	  <dt>halt:</dt>
+	   <dd>This instruction displays the message<br>
+	   <span class="strict">*** Simpletron execution terminated ***</span></dd>
+	 </dl>
+	</p> <p>
+	 When the SML program completes execution, the name and contents of each register as well as the complete contents of memory should be displayed. Such a printout is often called a computer dump (no, a computer dump is not a place where old computers go). To help you program your dump method, a sample dump format is shown in Fig. 7.39. Note that a dump after executing a Simpletron program would show the actual values of instructions and data values at the moment execution terminated.
+	</p>
+	<hr>
+	<p class="page">page 355
+	</p> <p>
+	 <blockquote class="strict"><div class="figure">
+		<span style="color:white">REGISTERS:</span><br>
+		<table>
+		<td>accumulator</td><td class="t_r">+0000</td>
+		</tr> <tr>
+		<td>instructionCounter</td><td class="t_r">00</td>
+		</tr> <tr>
+		<td>instructionRegister</td><td class="t_r">+0000</td>
+		</tr> <tr>
+		<td>operationCode</td><td class="t_r">00</td>
+		</tr> <tr>
+		<td>operand</td><td class="t_r">00</td>
+		</tr></table>
+		<span style="color:white">MEMORY:</span><br>
+		<table> <tr>
+	  </tr> <tr>
+		<th>--</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+	  </tr> <tr>
+		<td>00</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>10</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>20</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>30</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>40</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>50</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>60</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>70</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>80</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr> <tr>
+		<td>90</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td> <td>+0000</td>
+	  </tr>
+		</table>
+	 </div></blockquote>
+	</p> <p>
+	Let us proceed with the execution of our program's first instructionnamely, the  <span class="strict">+1009</span> in location <span class="strict">00</span> . As we have indicated, the switch statement simulates this task by prompting the user to enter a value, reading the value and storing it in memory location <span class="strict">memory[ operand ]</span> . The value is then read into location <span class="strict">09</span> .
+	</p> <p>
+
+	At this point, simulation of the first instruction is completed. All that remains is to prepare the Simpletron to execute the next instruction. Since the instruction just performed was not a transfer of control, we need merely increment the instruction-counter register as follows :
+	<span class="strict">instructionCounter++;</span>
+	</p> <p>
+	This action completes the simulated execution of the first instruction. The entire process (i.e., the instruction execution cycle) begins anew with the fetch of the next instruction to execute.
+	</p> <p>
+	Now let us consider how the branching instructions - the transfers of control - are simulated. All we need to do is adjust the value in the instruction counter appropriately. Therefore, the unconditional branch instruction ( <span class="strict">40</span> ) is simulated within the switch as
+	<span class="strict">instructionCounter = operand;</span>
+	</p> <p>
+	The conditional "branch if accumulator is zero" instruction is simulated as<br>
+	<span class="strict">if ( <span class="var">accumulator</span> == <span class="num">0</span> )<br>
+	  &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">instructionCounter</span> = <span class="var">operand</span>;</span>
+	</p> <p>
+	At this point, you should implement your Simpletron simulator and run each of the SML programs you wrote in Exercise 7.34. If you desire, you may embellish SML with additional features and provide for these features in your simulator.
+	</p> <p>
+	Your simulator should check for various types of errors. During the program-loading phase, for example, each number the user types into the Simpletron's memory must be in the range <span class="strict">-9999</span> to <span class="strict">+9999</span> . Your simulator should test that each number entered is in this range and, if not, keep prompting the user to reenter the number until the user enters a correct number.
+	</p> <p>
+	During the execution phase, your simulator should check for various serious errors, such as attempts to divide by zero, attempts to execute invalid operation codes, and accumulator overflows (i.e., arithmetic operations resulting in values larger than <span class="strict">+9999</span> or smaller than <span class="strict">-9999</span> ). Such serious errors are called fatal errors. When a fatal error is detected , your simulator should display an error message, such as
+	<blockquote class="strict">
+		*** Attempt to divide by zero ***<br>
+		*** Simpletron execution abnormally terminated ***
+	</blockquote>
+	and should display a full computer dump in the format we discussed previously. This treatment will help the user locate the error in the program.
+	</p> </div>
+	<p class="page">page 356</p>
+	<hr>
+	<div class="sec_header">	7.36
+	</div>
+	<div class="sec_content">
+	<p>
+	<em>( Simpletron Simulator Modifications )</em> In Exercise 7.35, you wrote a software simulation of a computer that executes programs written in Simpletron Machine Language (SML). In this exercise, we propose several modifications and enhancements to the Simpletron Simulator. In Exercise 17.26 and Exercise 17.27, we propose building a compiler that converts programs written in a high-level programming language (a variation of Basic) to Simpletron Machine Language. Some of the following modifications and enhancements may be required to execute the programs produced by the compiler:
+	</p> <p>
+	<ol type="a"> <li class="bot">
+	Extend the Simpletron Simulator's memory to contain <em>1000 memory locations</em> to enable the Simpletron to handle larger programs.
+	</li> <li class="bot">
+	Allow the simulator to perform <em>remainder</em> calculations. This modification requires an additional SML instruction.
+	</li> <li class="bot">
+	Allow the simulator to perform <em>exponentiation</em> calculations. This modification requires an additional SML instruction.
+	</li> <li class="bot">
+	Modify the simulator to use <em>hexadecimal values</em> rather than integer values to represent SML instructions.
+	</li> <li class="bot">
+	Modify the simulator to allow output of <em>a newline</em>. This modification requires an additional SML instruction.
+	</li> <li class="bot">
+	Modify the simulator to process <em>floating-point values</em> in addition to integer values.
+	</li> <li class="bot">
+	Modify the simulator to handle <em>string input</em>. [ Hint: Each Simpletron word can be divided into two groups, each holding a two-digit integer. Each two-digit integer represents the ASCII (see Appendix B) decimal equivalent of a character. Add a machine language instruction that will input a string and store the string, beginning at a specific Simpletron memory location. The first half of the word at that location will be a count of the number of characters in the string (i.e., the length of the string). Each succeeding half-word contains one ASCII character expressed as two decimal digits. The machine language instruction converts each character into its ASCII equivalent and assigns it to a half-word.]
+	</li> <li class="bot">
+	Modify the simulator to handle <em>output of strings</em> stored in the format of part (g). [ Hint: Add a machine-language instruction that will display a string, beginning at a certain Simpletron memory location. The first half of the word at that location is a count of the number of characters in the string (i.e., the length of the string). Each succeeding half-word contains one ASCII character expressed as two decimal digits. The machine-language instruction checks the length and displays the string by translating each two-digit number into its equivalent character.]</li>
+	</p> </div>
+	<p>&emsp;</p><p>&emsp;</p><p>&emsp;</p>
+	</div>
+ </div>
+</body>
+ </html>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

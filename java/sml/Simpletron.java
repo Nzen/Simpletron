@@ -38,6 +38,14 @@ public class Simpletron
 		signal = cpu.result( instructionVal );
 		moveData( signal.path, signal.cargo );
 	}
+
+	 	// assuming already indirected
+	 	switch( storedInstrAlready ){
+	 	 case Instr.INPUT:
+	 	 	return new Signal( pair.I_C, instrVal );
+	 	 case Instr.STORE:
+	 	 	return new Signal( pair.C_R, instrVal );
+
 	void moveData( path, cargo ) {
 		switch( path )
 		{
@@ -50,13 +58,17 @@ public class Simpletron
 		case pair.C_C: {
 			brain.receive( brain.emit( cargo ) );
 			break; }	// it handles distinguishing branch & math
-		In : inp -> cpu
-		Pr : cpu -> out
-		Hl : cpu -> sml
-		br : cpu -> cpu
-		st : cpu -> ram
+
+	READ, WRITE, LOAD, STORE
+	ADD, SUBTRACT, DIVIDE, MULTIPY, MODULUS, EXPONENT
+	BRANCH, BRANCHNEG, BRANCHZERO, HALT
+		Rd : inp -> cpu
+		Wt : cpu -> out
 		Ld : ram -> cpu
-		ma : cpu -> cpu
+		St : cpu -> ram
+		+- : cpu -> cpu
+		Br : cpu -> cpu
+		Hl : cpu -> sml
 
 		[cpu] emit( info ) {
 		 switch( info.instr ){
@@ -80,15 +92,13 @@ public class Simpletron
 		 	 	pc = instr_result.answ;
 		 	 case Inst.ADD:
 		 	 	acc = instr_result.answ;
-
-		 [cpu] result(instrVal){
-		 	// assuming already indirected
-		 	switch( storedInstrAlready ){
-		 	 case Instr.INPUT:
-		 	 	return new Signal( pair.I_C, instrVal );
-		 	 case Instr.STORE:
-		 	 	return new Signal( pair.C_R, instrVal );
 			
 	}
 	*/
 }
+
+
+
+
+
+
