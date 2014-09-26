@@ -9,4 +9,9 @@ public class SmlSession
 		SmlMem bla = new SmlMem( 33 );
 		System.out.println( bla.testMem() );
 	}
+	/*
+	
+		SmlMem bla = new SmlMem( 33 );
+		System.out.println( bla.testMem() );
+	*/
 }

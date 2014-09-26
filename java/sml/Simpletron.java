@@ -40,7 +40,7 @@ public class Simpletron
 	}
 
 	 	// assuming already indirected
-	 	switch( storedInstrAlready ){
+	 cpu?	switch( storedInstrAlready ){
 	 	 case Instr.INPUT:
 	 	 	return new Signal( pair.I_C, instrVal );
 	 	 case Instr.STORE:

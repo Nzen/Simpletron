@@ -1,7 +1,5 @@
 package sml;
 
-//package java;
-
 public class SmlMem
 {
 	private int[] ram;
@@ -16,19 +14,42 @@ public class SmlMem
 		ram = new int[ SIZE ];
 	}
 
-	public int readMem( int address )
+	// ram microprocessor part 1
+	public void receive( int pingCargo ) // FIX eventually expect a different struct
+	{
+		if ( pingCargo == 43 )
+			setMem( pingCargo, 43 );
+		else
+			// signal error, bad instruction
+			System.out.println( " SmlMem received an instruction I don't expect" );
+	}
+
+	// ram microprocessor part 2
+	public int emit( int pingCargo ) // FIX eventually expect a different struct
+	{
+		Word_Error candidate = readMem( pingCargo );
+		if ( candidate.flag() != SmlError.NONE )
+		{
+			System.out.println( " SmlMem doesn't emit() yet" );
+			return -1;
+		}
+		else
+			return candidate.word(); // eventually wrap in whatever
+	}
+
+	public Word_Error readMem( int address )
 	{
 		if ( badAddr( address ) )
 		{
-			return MAX + 1;//SmlError.BAD_ADDR; or val error struct?
+			return new Word_Error( -1, SmlError.BAD_ADDR );
 		}
 		else
 		{
-			return ram[ address ];
+			return new Word_Error( ram[ address ], SmlError.NONE );
 		}
 	}
 
-	public SmlError setMem( int address, int newVal )
+	private SmlError setMem( int address, int newVal )
 	{
 		if ( underflow( newVal ) )
 			return SmlError.UNDERFLOW;
@@ -104,19 +125,22 @@ public class SmlMem
 	private int t_readMem()
 	{
 		int bad = 0;
-		if ( ! overflow(readMem( SIZE + 50 )) )
+		Word_Error result;
+		result = readMem( SIZE + 50 ); 
+		if ( result.flag() != SmlError.BAD_ADDR  )
 			bad++;
 		int val = 39;
 		int ind = 3;
 		int temp = ram[ ind ];
 		ram[ ind ] = val;
-		if ( readMem( ind ) != val )
+		result = readMem( ind );
+		if ( result.word() != val )
 			bad++;
 		ram[ ind ] = temp;
 		ind = 0;
 		temp = ram[ ind ];
 		ram[ ind ] = val;
-		if ( readMem( ind ) != val )
+		if ( result.word() != val )
 			bad++;
 		ram[ ind ] = temp;
 		return bad;
