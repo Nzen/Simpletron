@@ -1,3 +1,5 @@
+_This branch closed for the forseeable future. Reimplementing in Java is premature._
+
 Deitel's _How to Program_ books (Java, C++, C#) have a couple exercises to emulate the other aspects of the programming environment. The first example is the VM that they call Simpletron. To incentivize learning Python, I implemented it. The second exercise involves creating a BASIC-esque compiler to generate its machine code. The complete version is tagged as '1.0' subsequent commits (& branches?) reflect optional improvements to the pair.
 
 ## RUNNING INSTRUCTIONS

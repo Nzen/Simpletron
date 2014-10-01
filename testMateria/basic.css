@@ -1,0 +1,57 @@
+body
+{	background-color:black;
+	color:silver; }
+hr
+{	float:clear; }
+dt
+{	float: left;
+	clear: left;
+	width: 5em; }
+dd
+{	 padding-left:1em; }
+table
+{	width:60%; }
+th
+{	text-align:left;
+	border-bottom-style: dotted;
+	border-width:thin; }
+a:link
+{	color:#A80000; }
+a:visited
+{	color:#FFFFFF; }
+::selection
+{	color:#9933CC; }
+.l_border
+{	width:10%;
+	float:left; }
+.content
+{	width:70%;
+	float:left; }
+.page
+{	color:#red;
+	text-align:center; }
+.sec_header
+{	width:5%;
+	float:left; }
+.sec_content
+{	width:93%;
+	float:left; }
+.figure
+{	padding:5px;
+	border-style:dotted;
+	border-width:thin; }
+.strict
+{	font-family:monospace;
+	color:gray; }
+.modifier
+{	color:deepskyblue; }
+.var
+{	color:dodgerblue; }
+.num
+{	color:aqua; }
+.d_wide
+{	width: 15em; }
+.t_r
+{	text-align:right; }
+.bot
+{	margin-bottom:.5em; }
